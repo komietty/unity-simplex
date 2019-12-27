@@ -1,15 +1,24 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
+using Unity.Mathematics;
+using static Unity.Mathematics.math;
 
 namespace kmty.geom.d3 {
     public struct Line {
-        public Vector3 pos;
-        public Vector3 vec;
+        public double3 pos;
+        public double3 vec;
 
-        public Line(Vector3 p, Vector3 v) {
+        public Line(double3 p, double3 v) {
+            if (Equals(v, (double3)0)) Debug.LogWarning("not creating a line");
             pos = p;
-            vec = v.normalized;
+            vec = normalize(v);
+        }
+
+        public void Draw() {
+            GL.Begin(GL.LINE_STRIP);
+            GL.Vertex((float3)(pos - vec * 10000));
+            GL.Vertex((float3)pos);
+            GL.Vertex((float3)(pos + vec * 10000));
+            GL.End();
         }
     }
 }

@@ -1,17 +1,20 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
+using Unity.Mathematics;
+using static Unity.Mathematics.math;
 
 namespace kmty.geom.d3 {
     public struct Sphere {
-        public Vector3 center;
-        public float radius;
+        public double3 center;
+        public double radius;
 
-        public Sphere(Vector3 c, float r) {
+        public Sphere(double3 c, double r) {
             center = c;
             radius = r;
         }
 
-        public bool Contains(Vector3 p) => (p - center).sqrMagnitude < radius * radius;
+        public bool Contains(double3 p, bool inclusive) {
+            if (inclusive) return lengthsq(p - center) <= radius * radius;
+            else           return lengthsq(p - center) <  radius * radius;
+        }
     }
 }

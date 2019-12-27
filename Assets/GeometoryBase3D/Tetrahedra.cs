@@ -1,15 +1,20 @@
 ﻿using UnityEngine;
-using System;
+using Unity.Mathematics;
+using static Unity.Mathematics.math;
 
 namespace kmty.geom.d3 {
     public class Tetrahedra {
-        public Vector3 a;
-        public Vector3 b;
-        public Vector3 c;
-        public Vector3 d;
+        public double3 a;
+        public double3 b;
+        public double3 c;
+        public double3 d;
+        public double3x4 points => double3x4(a, b, c, d);
         public Triangle[] triangles => new Triangle[] { new Triangle(a, b, c), new Triangle(b, c, d), new Triangle(c, d, a), new Triangle(d, a, b) };
 
-        public Tetrahedra(Vector3 a, Vector3 b, Vector3 c, Vector3 d) {
+        public Tetrahedra(double3 a, double3 b, double3 c, double3 d) {
+            if (Equals(a, b) || Equals(a, c) || Equals(a, d) || 
+                Equals(b, c) || Equals(b, d) || Equals(c, d))
+                Debug.LogWarning("not creating a tetrahedra");
             this.a = a;
             this.b = b;
             this.c = c;
@@ -24,29 +29,31 @@ namespace kmty.geom.d3 {
             return f0 || f1 || f2 || f3;
         }
 
-        public bool Contains(Vector3 p, bool includeOnPlane) {
-            var f1 = new Triangle(a, b, c).SameSide(d, p, includeOnPlane);
-            var f2 = new Triangle(b, c, d).SameSide(a, p, includeOnPlane);
-            var f3 = new Triangle(c, d, a).SameSide(b, p, includeOnPlane);
-            var f4 = new Triangle(d, a, b).SameSide(c, p, includeOnPlane);
+        public bool Contains(double3 p, bool includeOnPlane) {
+            var f1 = new Triangle(a, b, c).IsSameSide(d, p, includeOnPlane);
+            var f2 = new Triangle(b, c, d).IsSameSide(a, p, includeOnPlane);
+            var f3 = new Triangle(c, d, a).IsSameSide(b, p, includeOnPlane);
+            var f4 = new Triangle(d, a, b).IsSameSide(c, p, includeOnPlane);
             return f1 && f2 && f3 && f4;
         }
 
-        public Vector3 RemainingPoint(Triangle t) {
-            if (a != t.a && a != t.b && a != t.c) return a;
-            else if (b != t.a && b != t.b && b != t.c) return b;
-            else if (c != t.a && c != t.b && c != t.c) return c;
-            else if (d != t.a && d != t.b && d != t.c) return d;
-            throw new ArgumentOutOfRangeException();
+        public double3 RemainingPoint(Triangle t) {
+            if      (!Equals(a,t.a) && !Equals(a , t.b) && !Equals(a != t.c)) return a;
+            else if (!Equals(b,t.a) && !Equals(b , t.b) && !Equals(b != t.c)) return b;
+            else if (!Equals(c,t.a) && !Equals(c , t.b) && !Equals(c != t.c)) return c;
+            else if (!Equals(d,t.a) && !Equals(d , t.b) && !Equals(d != t.c)) return d;
+            throw new System.ArgumentOutOfRangeException();
         }
 
-        public Sphere GetCircumscribedSphere() {
+        public Sphere GetCircumscribedSphere(double precisition) {
             var triA = new Triangle(a, b, c);
             var triB = new Triangle(b, c, d);
             var cntr = Util3D.GetIntersectionPoint(
-                                new Line(triA.GetCircumCenter(), triA.GetNormal()),
-                                new Line(triB.GetCircumCenter(), triB.GetNormal()));
-            return new Sphere(cntr, Vector3.Distance(cntr, a));
+                                new Line(triA.GetCircumCenter(precisition), triA.normal),
+                                new Line(triB.GetCircumCenter(precisition), triB.normal),
+                                precisition
+                                );
+            return new Sphere(cntr, distance(cntr, a));
 
             #region another solver
             /// <summary>
@@ -78,19 +85,19 @@ namespace kmty.geom.d3 {
 
         public void Draw() {
             GL.Begin(GL.LINE_STRIP);
-            GL.Vertex(a);
-            GL.Vertex(b);
-            GL.Vertex(c);
-            GL.Vertex(a);
+            GL.Vertex((float3)a);
+            GL.Vertex((float3)b);
+            GL.Vertex((float3)c);
+            GL.Vertex((float3)a);
             GL.End();
             GL.Begin(GL.LINE_STRIP);
-            GL.Vertex(a);
-            GL.Vertex(d);
-            GL.Vertex(c);
+            GL.Vertex((float3)a);
+            GL.Vertex((float3)d);
+            GL.Vertex((float3)c);
             GL.End();
             GL.Begin(GL.LINES);
-            GL.Vertex(d);
-            GL.Vertex(b);
+            GL.Vertex((float3)d);
+            GL.Vertex((float3)b);
             GL.End();
         }
     }

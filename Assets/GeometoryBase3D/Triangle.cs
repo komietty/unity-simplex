@@ -1,139 +1,110 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 using System;
+using Unity.Mathematics;
+using static Unity.Mathematics.math;
 
 namespace kmty.geom.d3 {
     public struct Triangle {
-        public Vector3 a;
-        public Vector3 b;
-        public Vector3 c;
+        public double3 a;
+        public double3 b;
+        public double3 c;
+        //public double3x3 points => double3x3(a, b, c);
+        public double3 normal => normalize(cross(b - a, c - a));
 
-        public Triangle(Vector3 a, Vector3 b, Vector3 c) {
-            if (a == b || b == c || c == a)
-                throw new ArgumentException();
+        public Triangle(double3 a, double3 b, double3 c) {
+            if (Equals(a, b) || Equals(b, c) || Equals(c, a)) Debug.LogWarning("not creating a triangle");
             this.a = a;
             this.b = b;
             this.c = c;
         }
 
-        //public static bool operator ==(Triangle t1, Triangle t2) {
-        //    Equation(t1, t2, out bool f1, out bool f2, out bool f3);
-        //    return f1 || f2 || f3;
-        //}
-
-        //public static bool operator !=(Triangle t1, Triangle t2) {
-        //    Equation(t1, t2, out bool f1, out bool f2, out bool f3);
-        //    return !(f1 || f2 || f3);
-        //}
-
         public bool Equals(Triangle t) {
-            var f1 = t.a == a && t.b == b && t.c == c;
-            var f2 = t.b == a && t.c == b && t.a == c;
-            var f3 = t.c == a && t.a == b && t.b == c;
-            var f4 = t.a == a && t.c == b && t.b == c;
-            var f5 = t.b == a && t.a == b && t.c == c;
-            var f6 = t.c == a && t.b == b && t.a == c;
+            var f1 = Equals(t.a, a) && Equals(t.b, b) && Equals(t.c, c);
+            var f2 = Equals(t.b, a) && Equals(t.c, b) && Equals(t.a, c);
+            var f3 = Equals(t.c, a) && Equals(t.a, b) && Equals(t.b, c);
+            var f4 = Equals(t.a, a) && Equals(t.c, b) && Equals(t.b, c);
+            var f5 = Equals(t.b, a) && Equals(t.a, b) && Equals(t.c, c);
+            var f6 = Equals(t.c, a) && Equals(t.b, b) && Equals(t.a, c);
             return f1 || f2 || f3 || f4 || f5 || f6;
         }
 
-        public Edge Remaining(Vector3 p) {
-            if (p == a) return new Edge(b, c);
-            else if (p == b) return new Edge(c, a);
-            else if (p == c) return new Edge(a, b);
+        public Edge Remaining(double3 p) {
+            if      (Equals(p, a)) return new Edge(b, c);
+            else if (Equals(p, b)) return new Edge(c, a);
+            else if (Equals(p, c)) return new Edge(a, b);
             throw new ArgumentOutOfRangeException();
         }
 
-        public bool SameSide(Vector3 p1, Vector3 p2, bool includeOnPlane) {
-            var n = GetNormal();
-            var d = Vector3.Dot(n, p1 - a) * Vector3.Dot(n, p2 - a);
-            if (includeOnPlane) return d >= 0;
-            else return d > 0;
+        public bool IsSameSide(double3 p1, double3 p2, bool includeOnPlane) {
+            double d = dot(normal, p1 - a) * dot(normal, p2 - a);
+            return includeOnPlane ? d >= 0d : d > 0d;
         }
 
-        float det3x3(Vector3 vecA, Vector3 vecB, Vector3 vecC) {
-            return ((vecA.x * vecB.y * vecC.z)
-                  + (vecA.y * vecB.z * vecC.x)
-                  + (vecA.z * vecB.x * vecC.y)
-                  - (vecA.x * vecB.z * vecC.y)
-                  - (vecA.y * vecB.x * vecC.z)
-                  - (vecA.z * vecB.y * vecC.x)
-                  );
-        }
-
-        public bool Intersects(Line l, out Vector3 pos) {
+        public bool Intersects(Line l, out double3 p) {
             // using cramer's rule
-            var origin = l.pos;
-            var ray = l.vec;
-            var v0 = a;
-            var v1 = b;
-            var v2 = c;
-            var invRay = -ray;
-            var edge1 = v1 - v0;
-            var edge2 = v2 - v0;
+            double3 origin = l.pos, ray = l.vec, e1 = b - a, e2 = c - a; 
+            var denominator = determinant(double3x3(e1, e2, -ray));
+            if (denominator == 0) Debug.LogWarning("line is paralleled");
 
-            var denominator = det3x3(edge1, edge2, invRay);
-            if (denominator == 0) Debug.LogError("line is paralleled");
+            var d = origin - a;
+            var u = determinant(double3x3(d, e2, -ray)) / denominator;
+            var v = determinant(double3x3(e1, d, -ray)) / denominator;
+            var t = determinant(double3x3(e1, e2, d))   / denominator;
 
-            var d = origin - v0;
-            var u = det3x3(d, edge2, invRay) / denominator;
-            var v = det3x3(edge1, d, invRay) / denominator;
-            var t = det3x3(edge1, edge2, d) / denominator;
-
-            pos = origin + ray * t;
-            return u > 0 && u < 1 && v > 0 && v < 1 && u + v < 1;
-
-            //            var v1 = b - a;
-            //            var v2 = c - a;
-            //            var v3 = - l.vec;
-            //            var v4 = l.pos - a;
-            //
-            //            var matU = Matrix4x4.identity;
-            //            matU.SetColumn(0, v4);
-            //            matU.SetColumn(1, v2);
-            //            matU.SetColumn(2, v3);
-            //
-            //            var matV = Matrix4x4.identity;
-            //            matV.SetColumn(0, v1);
-            //            matV.SetColumn(1, v4);
-            //            matV.SetColumn(2, v3);
-            //
-            //            var matO = Matrix4x4.identity;
-            //            matO.SetColumn(0, v1);
-            //            matO.SetColumn(1, v2);
-            //            matO.SetColumn(2, v3);
-            //
-            //            var detU = matU.determinant;
-            //            var detV = matV.determinant;
-            //            var detO = matO.determinant;
-            //
-            //            var u = detU / detO;
-            //            var v = detV / detO;
-            //
-            //            pos = u * v1 + v * v2;
-            //
-            //            // TODO: Consider degenerate cases like line crosses edges of the triangle i.e. u == 0...
-            //            var f1 = u > 0 && u < 1;
-            //            var f2 = v > 0 && v < 1;
-            //            var f3 = u + v > 0 && u + v < 1;
-            //
-            //            return f1 && f2 && f3;
+            p = origin + ray * t;
+            return u > 0d && u < 1d && v > 0d && v < 1d && u + v < 1d;
         }
 
-        public Vector3 GetNormal() { // TODO : Define which rotation determine normal side
-            return Vector3.Cross(b - a, c - b).normalized;
+        public bool Intersects(Edge e, out double3 p, bool inclusive) {
+            // using cramer's rule
+            double3 origin = e.a, ray = normalize(e.b - e.a), e1 = b - a, e2 = c - a;
+            var denominator = determinant(double3x3(e1, e2, -ray));
+            if (denominator == 0) Debug.LogWarning("line is paralleled");
+
+            var d = origin - a;
+            var u = determinant(double3x3(d, e2, -ray)) / denominator;
+            var v = determinant(double3x3(e1, d, -ray)) / denominator;
+            var t = determinant(double3x3(e1, e2, d))   / denominator;
+
+            p = origin + ray * t;
+            bool f1 = u > 0d && u < 1d && v > 0d && v < 1d && u + v < 1d;
+            bool f2 = t >  0 && t <  length(e.b - e.a); 
+            bool f3 = t >= 0 && t <= length(e.b - e.a);
+            return inclusive ? f1 && f3 : f1 && f2;
         }
 
-        public Vector3 GetCircumCenter() {
-            var p1 = Vector3.Lerp(a, b, 0.5f);
-            var p2 = Vector3.Lerp(b, c, 0.5f);
+        public double3 GetCircumCenter(double threshold) {
+            var p1 = lerp(a, b, 0.5d);
+            var p2 = lerp(b, c, 0.5d);
             var vecAB = b - a;
             var vecBC = c - b;
-            var axis = Vector3.Cross(vecAB, vecBC).normalized;
-            var dir1 = Vector3.Cross(vecAB, axis).normalized;
-            var dir2 = Vector3.Cross(vecBC, axis).normalized;
-            return Util3D.GetIntersectionPoint(new Line(p1, dir1), new Line(p2, dir2));
+            var axis = normalize(cross(vecAB, vecBC));
+            var dir1 = normalize(cross(vecAB, axis));
+            var dir2 = normalize(cross(vecBC, axis));
+            return Util3D.GetIntersectionPoint(new Line(p1, dir1), new Line(p2, dir2), threshold);
         }
 
+        public void Draw() {
+            GL.Begin(GL.LINE_STRIP);
+            GL.Vertex((float3)a);
+            GL.Vertex((float3)b);
+            GL.Vertex((float3)c);
+            GL.Vertex((float3)a);
+            GL.End();
+        }
+
+        public void DrawCircumCircle() {
+            var nrm = normalize(cross(b - a, c - a));
+            var tsl = (float3)GetCircumCenter(1e-10d);
+            var qut = Quaternion.FromToRotation(Vector3.forward, (float3)nrm);
+
+            GL.Begin(GL.LINE_STRIP);
+            for (float j = 0; j < Mathf.PI * 2.1f; j += Mathf.PI * 0.03f) {
+                var pnt = double3(cos(j), sin(j), 0) * distance(tsl, a);
+                var pos = qut * (float3)pnt + (Vector3)tsl;
+                GL.Vertex(pos);
+            }
+            GL.End();
+        }
     }
 }

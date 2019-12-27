@@ -1,5 +1,7 @@
 ﻿using UnityEngine;
 using kmty.geom.d3;
+using Unity.Mathematics;
+using static Unity.Mathematics.math;
 
 namespace demo {
     public class TriangleLineIntersection : MonoBehaviour {
@@ -8,7 +10,7 @@ namespace demo {
         public int triangleSize;
         Triangle t;
         Line l;
-        Vector3 p;
+        double3 p;
         bool f;
 
         void Start() {
@@ -19,20 +21,22 @@ namespace demo {
         }
 
         void SetTestCase() {
-            t = new Triangle(Random.onUnitSphere * triangleSize, Random.onUnitSphere * triangleSize, Random.onUnitSphere * triangleSize);
-            l = new Line(Vector3.one, Random.onUnitSphere);
-            p = Vector3.negativeInfinity;
+            t = new Triangle(
+                (float3)UnityEngine.Random.onUnitSphere * triangleSize, 
+                (float3)UnityEngine.Random.onUnitSphere * triangleSize, 
+                (float3)UnityEngine.Random.onUnitSphere * triangleSize);
+            l = new Line(double3(1), (float3)UnityEngine.Random.onUnitSphere);
             f = t.Intersects(l, out p);
         }
 
         void OnRenderObject() {
-            var t1 = new Vector3(1, 1, 0);
-            var t2 = new Vector3(0, 0, 0);
-            var t3 = new Vector3(0.4f, 0.1f, 0.9f);
-            var _p = new Vector3(1f, 0f, 0);
-            var _q = new Vector3(0f, 1f, 0f);
+            var t1 = float3(1, 1, 0);
+            var t2 = float3(0, 0, 0);
+            var t3 = float3(0.4f, 0.1f, 0.9f);
+            var _p = float3(1f, 0f, 0);
+            var _q = float3(0f, 1f, 0f);
 
-            var f = new Triangle(t1, t2, t3).Intersects(new Line(_p, _q - _p), out Vector3 intersects);
+            var f = new Triangle(t1, t2, t3).Intersects(new Line(_p, _q - _p), out double3 intersects);
             Debug.Log(f);
 
             GL.PushMatrix();
@@ -65,11 +69,11 @@ namespace demo {
 
             GL.Begin(GL.TRIANGLE_STRIP);
             mat.SetPass(2);
-            GL.Vertex(intersects + Vector3.left * 0.02f);
-            GL.Vertex(intersects + Vector3.up * 0.02f);
-            GL.Vertex(intersects + Vector3.right * 0.02f);
-            GL.Vertex(intersects + Vector3.down * 0.02f);
-            GL.Vertex(intersects + Vector3.left * 0.02f);
+            GL.Vertex((float3)intersects + (float3)Vector3.left * 0.02f);
+            GL.Vertex((float3)intersects + (float3)Vector3.up * 0.02f);
+            GL.Vertex((float3)intersects + (float3)Vector3.right * 0.02f);
+            GL.Vertex((float3)intersects + (float3)Vector3.down * 0.02f);
+            GL.Vertex((float3)intersects + (float3)Vector3.left * 0.02f);
             GL.End();
 
             GL.PopMatrix();
