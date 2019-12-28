@@ -6,7 +6,7 @@ Simplex geometry utility library on 2D/3D. If you are looking for some circumCir
 
 ## Usage
 
-This library is based on Unity.Mathematics SIMD library, be sure to install them beforehand.
+This library is based on Unity.Mathematics SIMD library, be sure to install them beforehand (ver 1.1.0).
 
 ## License
 [MIT](LICENSE)
