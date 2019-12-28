@@ -1,25 +1,23 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 using kmty.geom.d3;
 using Unity.Mathematics;
 using static Unity.Mathematics.math;
 
 namespace demo {
-    public class DemoTriangle : MonoBehaviour {
+    public class DemoTriangle3D : MonoBehaviour {
         [SerializeField] protected Material m;
         [SerializeField] protected float scale;
         [SerializeField, Range(-5, 5)] protected float x;
         [SerializeField, Range(-5, 5)] protected float y;
         Triangle t;
-        Edge e;
+        Segment e;
 
         void Start() {
             Init();
         }
 
         void Init() {
-            e = new Edge(double3(0, 0, -10), double3(x, y, 10));
+            e = new Segment(double3(0, 0, -10), double3(x, y, 10));
             t = new Triangle(
                 (float3)UnityEngine.Random.onUnitSphere * scale,
                 (float3)UnityEngine.Random.onUnitSphere * scale,

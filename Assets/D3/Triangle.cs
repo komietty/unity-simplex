@@ -28,10 +28,10 @@ namespace kmty.geom.d3 {
             return f1 || f2 || f3 || f4 || f5 || f6;
         }
 
-        public Edge Remaining(double3 p) {
-            if      (Equals(p, a)) return new Edge(b, c);
-            else if (Equals(p, b)) return new Edge(c, a);
-            else if (Equals(p, c)) return new Edge(a, b);
+        public Segment Remaining(double3 p) {
+            if      (Equals(p, a)) return new Segment(b, c);
+            else if (Equals(p, b)) return new Segment(c, a);
+            else if (Equals(p, c)) return new Segment(a, b);
             throw new ArgumentOutOfRangeException();
         }
 
@@ -55,7 +55,7 @@ namespace kmty.geom.d3 {
             return u > 0d && u < 1d && v > 0d && v < 1d && u + v < 1d;
         }
 
-        public bool Intersects(Edge e, out double3 p, bool inclusive) {
+        public bool Intersects(Segment e, out double3 p, bool inclusive) {
             // using cramer's rule
             double3 origin = e.a, ray = normalize(e.b - e.a), e1 = b - a, e2 = c - a;
             var denominator = determinant(double3x3(e1, e2, -ray));

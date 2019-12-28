@@ -4,7 +4,7 @@ using Unity.Mathematics;
 using static Unity.Mathematics.math;
 
 namespace demo {
-    public class DemoTetrahedra : MonoBehaviour {
+    public class DemoTetrahedra3D : MonoBehaviour {
 
         [SerializeField] protected Material m;
         [SerializeField] protected float scale;
@@ -14,13 +14,13 @@ namespace demo {
 
         void Start() {
             t = Init();
-            circumscribedSphere = t.GetCircumscribedSphere(1e-18d);
+            circumscribedSphere = t.GetCircumscribedSphere(1e-15d);
         }
 
         void Update() {
             if (Input.GetKey(KeyCode.Space)) {
                 t = Init();
-                circumscribedSphere = t.GetCircumscribedSphere(1e-18d);
+                circumscribedSphere = t.GetCircumscribedSphere(1e-15d);
             }
         }
 
@@ -60,8 +60,9 @@ namespace demo {
         void OnDrawGizmos() {
             if (Application.isPlaying) {
                 var cs = t.GetCircumscribedSphere(1e-15d);
-                Gizmos.color = Color.white;
+                Gizmos.color = Color.green;
                 Gizmos.DrawCube((float3)cs.center, Vector3.one * 0.1f);
+                Gizmos.color = Color.white;
                 Gizmos.DrawWireSphere((float3)cs.center, (float)cs.radius);
             }
         }

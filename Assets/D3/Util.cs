@@ -18,17 +18,17 @@ namespace kmty.geom.d3 {
             throw new ArgumentException();
         }
 
-        public static bool IsIntersecting(Edge e1, Edge e2, double threshold) {
+        public static bool IsIntersecting(Segment e1, Segment e2, double threshold) {
             IsIntersecting(e1, e2, out bool f, out double3 p, threshold);
             return f;
         }
 
-        public static double3 GetIntersectionPoint(Edge e1, Edge e2, double threshold) {
+        public static double3 GetIntersectionPoint(Segment e1, Segment e2, double threshold) {
             IsIntersecting(e1, e2, out bool f, out double3 p, threshold);
             return p;
         }
 
-        static void IsIntersecting(Edge e1, Edge e2, out bool flag, out double3 pos, double threshold) {
+        static void IsIntersecting(Segment e1, Segment e2, out bool flag, out double3 pos, double threshold) {
             var v1 = e1.b - e1.a;
             var v2 = e2.b - e2.a;
             var n1 = normalize(v1);
