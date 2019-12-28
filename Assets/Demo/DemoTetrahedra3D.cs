@@ -36,11 +36,11 @@ namespace demo {
         void OnGUI() {
             var c = circumscribedSphere.center;
             var r = circumscribedSphere.radius;
-            GUI.Label(new Rect(10,  10, 300, 20), "UnitCirclePrecision");
-            GUI.Label(new Rect(10,  35, 300, 20), (length(t.a - c) - r).ToString("F14"));
-            GUI.Label(new Rect(10,  60, 300, 20), (length(t.b - c) - r).ToString("F14"));
-            GUI.Label(new Rect(10,  85, 300, 20), (length(t.c - c) - r).ToString("F14"));
-            GUI.Label(new Rect(10, 110, 300, 20), (length(t.d - c) - r).ToString("F14"));
+            GUI.Label(new Rect(10,  10, 300, 20), "CircumSpherePrecision");
+            GUI.Label(new Rect(10,  35, 300, 20), (length(t.a - c) - r).ToString("F15"));
+            GUI.Label(new Rect(10,  60, 300, 20), (length(t.b - c) - r).ToString("F15"));
+            GUI.Label(new Rect(10,  85, 300, 20), (length(t.c - c) - r).ToString("F15"));
+            GUI.Label(new Rect(10, 110, 300, 20), (length(t.d - c) - r).ToString("F15"));
         }
 
         void OnRenderObject() {
