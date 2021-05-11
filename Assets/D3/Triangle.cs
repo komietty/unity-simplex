@@ -44,7 +44,11 @@ namespace kmty.geom.d3 {
             // using cramer's rule
             double3 origin = l.pos, ray = l.vec, e1 = b - a, e2 = c - a; 
             var denominator = determinant(double3x3(e1, e2, -ray));
-            if (denominator == 0) Debug.LogWarning("line is paralleled");
+            if (denominator == 0) {
+                Debug.LogWarning("line is paralleled");
+                p = default;
+                return false;
+            }
 
             var d = origin - a;
             var u = determinant(double3x3(d, e2, -ray)) / denominator;
@@ -59,7 +63,11 @@ namespace kmty.geom.d3 {
             // using cramer's rule
             double3 origin = e.a, ray = normalize(e.b - e.a), e1 = b - a, e2 = c - a;
             var denominator = determinant(double3x3(e1, e2, -ray));
-            if (denominator == 0) Debug.LogWarning("line is paralleled");
+            if (denominator == 0) {
+                Debug.LogWarning("line is paralleled");
+                p = default;
+                return false;
+            }
 
             var d = origin - a;
             var u = determinant(double3x3(d, e2, -ray)) / denominator;
@@ -72,6 +80,7 @@ namespace kmty.geom.d3 {
             bool f3 = t >= 0 && t <= length(e.b - e.a);
             return inclusive ? f1 && f3 : f1 && f2;
         }
+
 
         public double3 GetCircumCenter(double threshold) {
             var p1 = lerp(a, b, 0.5d);

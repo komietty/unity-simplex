@@ -38,10 +38,10 @@ namespace kmty.geom.d3 {
         }
 
         public double3 RemainingPoint(Triangle t) {
-            if      (!Equals(a,t.a) && !Equals(a , t.b) && !Equals(a != t.c)) return a;
-            else if (!Equals(b,t.a) && !Equals(b , t.b) && !Equals(b != t.c)) return b;
-            else if (!Equals(c,t.a) && !Equals(c , t.b) && !Equals(c != t.c)) return c;
-            else if (!Equals(d,t.a) && !Equals(d , t.b) && !Equals(d != t.c)) return d;
+            if      (!Equals(a, t.a) && !Equals(a, t.b) && !Equals(a, t.c)) return a;
+            else if (!Equals(b, t.a) && !Equals(b, t.b) && !Equals(b, t.c)) return b;
+            else if (!Equals(c, t.a) && !Equals(c, t.b) && !Equals(c, t.c)) return c;
+            else if (!Equals(d, t.a) && !Equals(d, t.b) && !Equals(d, t.c)) return d;
             throw new System.ArgumentOutOfRangeException();
         }
 
