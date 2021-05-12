@@ -1,4 +1,6 @@
 ﻿using UnityEngine;
+using System.Collections.Generic;
+using System.Linq;
 using System;
 using Unity.Mathematics;
 using static Unity.Mathematics.math;
@@ -13,6 +15,16 @@ namespace kmty.geom.d3 {
 
         public Triangle(double3 a, double3 b, double3 c) {
             if (Equals(a, b) || Equals(b, c) || Equals(c, a)) Debug.LogWarning("not creating a triangle");
+
+            // hopefully create sorted list ...
+            //var s = new List<double3> { a, b, c }.OrderBy(v => v.x).ToList();
+            //var f = s[0] == s[1];
+            //if (f.x) {
+            //    if (f.y) s = s.OrderBy(v => v.z).ToList(); 
+            //    else     s = s.OrderBy(v => v.y).ToList();
+            //}
+            //if(cross(s[1] - s[0], s[2] - s[1]).z > 0)
+
             this.a = a;
             this.b = b;
             this.c = c;
@@ -83,8 +95,8 @@ namespace kmty.geom.d3 {
 
 
         public double3 GetCircumCenter(double threshold) {
-            var p1 = lerp(a, b, 0.5d);
-            var p2 = lerp(b, c, 0.5d);
+            var p1 = lerp(a, b, 0.5);
+            var p2 = lerp(b, c, 0.5);
             var vecAB = b - a;
             var vecBC = c - b;
             var axis = normalize(cross(vecAB, vecBC));
@@ -93,6 +105,7 @@ namespace kmty.geom.d3 {
             return Util3D.GetIntersectionPoint(new Line(p1, dir1), new Line(p2, dir2), threshold);
         }
 
+        #region drawer
         public void Draw() {
             GL.Begin(GL.LINE_STRIP);
             GL.Vertex((float3)a);
@@ -115,5 +128,6 @@ namespace kmty.geom.d3 {
             }
             GL.End();
         }
+        #endregion
     }
 }

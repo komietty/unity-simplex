@@ -7,15 +7,27 @@ namespace kmty.geom.d2 {
         public float2 a;
         public float2 b;
         public float2 c;
+        public Circle circumscribedCircle { get; private set; }
+        public float2 circumscribedCenter => circumscribedCircle.center;
 
         public Triangle(Segment e, float2 c) : this(e.a, e.b, c) { }
 
         public Triangle(float2 a, float2 b, float2 c) { // counterclockwise
             if (Equals(a, b) || Equals(b, c) || Equals(c, a)) throw new ArgumentException();
-            bool flag = cross(float3(b - a, 0), float3(c - b, 0)).z > 0;
+            bool f = cross(float3(b - a, 0), float3(c - b, 0)).z > 0;
             this.a = a;
-            this.b = flag ? b : c;
-            this.c = flag ? c : b;
+            this.b = f ? b : c;
+            this.c = f ? c : b;
+
+            float xa2 = a.x * a.x, ya2 = a.y * a.y;
+            float xb2 = b.x * b.x, yb2 = b.y * b.y;
+            float xc2 = c.x * c.x, yc2 = c.y * c.y;
+            float k = 2 * ((b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x));
+            var cntr = float2(
+                ((c.y - a.y) * (xb2 - xa2 + yb2 - ya2) + (a.y - b.y) * (xc2 - xa2 + yc2 - ya2)) / k,
+                ((a.x - c.x) * (xb2 - xa2 + yb2 - ya2) + (b.x - a.x) * (xc2 - xa2 + yc2 - ya2)) / k
+            );
+            circumscribedCircle = new Circle(cntr, distance(a, cntr));
         }
 
         public bool ContainsSegment(Segment e) {
@@ -50,18 +62,5 @@ namespace kmty.geom.d2 {
             crossB = cross(float3(c - b, 0), float3(p - c, 0)).z;
             crossC = cross(float3(a - c, 0), float3(p - a, 0)).z;
         }
-
-        public Circle GetCircumscribedCircle() {
-            var xa2 = a.x * a.x; var ya2 = a.y * a.y;
-            var xb2 = b.x * b.x; var yb2 = b.y * b.y;
-            var xc2 = c.x * c.x; var yc2 = c.y * c.y;
-            var k = 2 * ((b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x));
-            var cntr = float2(
-                ((c.y - a.y) * (xb2 - xa2 + yb2 - ya2) + (a.y - b.y) * (xc2 - xa2 + yc2 - ya2)) / k,
-                ((a.x - c.x) * (xb2 - xa2 + yb2 - ya2) + (b.x - a.x) * (xc2 - xa2 + yc2 - ya2)) / k
-            );
-            return new Circle(cntr, distance(a, cntr));
-        }
-
     }
 }

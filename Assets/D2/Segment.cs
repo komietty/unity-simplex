@@ -5,13 +5,10 @@ using static Unity.Mathematics.math;
 namespace kmty.geom.d2 {
 
     public struct Segment {
-        public float2 a;
-        public float2 b;
-
-        public Segment(float2 a, float2 b) {
-            this.a = a;
-            this.b = b;
-        }
+        public float2 a { get; set; }
+        public float2 b { get; set; }
+        public void Set(float2 a, float2 b) { this.a = a; this.b = b; }
+        public Segment(float2 a, float2 b)  { this.a = a; this.b = b; }
 
         public Line GetLine() => new Line(a, b - a);
 
@@ -52,8 +49,18 @@ namespace kmty.geom.d2 {
         }
 
         public Vector2 GetPoint(float offset) => a + normalize(b - a) * offset;
-
         public void DrawGizmos() { Gizmos.DrawLine((Vector2)a, (Vector2)b); }
 
+
+        public override bool Equals(object obj) { return base.Equals(obj); }
+        public override int GetHashCode() { return base.GetHashCode(); }
+
+        public static bool operator !=(Segment s1, Segment s2) => !(s1 == s2);
+        public static bool operator ==(Segment s1, Segment s2) {
+            if (Object.ReferenceEquals(s1, s2)) return true;
+            if (((object)s1 == null) || ((object)s2 == null)) return false;
+            return s1.a.x == s2.a.x && s1.a.y == s2.a.y &&
+                   s1.b.x == s2.b.x && s1.b.y == s2.b.y;
+        }
     }
 }
