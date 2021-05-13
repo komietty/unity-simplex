@@ -10,6 +10,7 @@ namespace kmty.geom.d3 {
         public double3 d;
         public double3x4 points => double3x4(a, b, c, d);
         public Triangle[] triangles => new Triangle[] { new Triangle(a, b, c), new Triangle(b, c, d), new Triangle(c, d, a), new Triangle(d, a, b) };
+        public Sphere circumscribedSphere;
 
         public Tetrahedra(double3 a, double3 b, double3 c, double3 d) {
             if (Equals(a, b) || Equals(a, c) || Equals(a, d) || 
@@ -19,6 +20,7 @@ namespace kmty.geom.d3 {
             this.b = b;
             this.c = c;
             this.d = d;
+            this.circumscribedSphere = GetCircumscribedSphere();
         }
 
         public bool HasFace(Triangle t) {
@@ -29,11 +31,11 @@ namespace kmty.geom.d3 {
             return f0 || f1 || f2 || f3;
         }
 
-        public bool Contains(double3 p, bool includeOnPlane) {
-            var f1 = new Triangle(a, b, c).IsSameSide(d, p, includeOnPlane);
-            var f2 = new Triangle(b, c, d).IsSameSide(a, p, includeOnPlane);
-            var f3 = new Triangle(c, d, a).IsSameSide(b, p, includeOnPlane);
-            var f4 = new Triangle(d, a, b).IsSameSide(c, p, includeOnPlane);
+        public bool Contains(double3 p, bool includeOnFacet) {
+            var f1 = new Triangle(a, b, c).IsSameSide(d, p, includeOnFacet);
+            var f2 = new Triangle(b, c, d).IsSameSide(a, p, includeOnFacet);
+            var f3 = new Triangle(c, d, a).IsSameSide(b, p, includeOnFacet);
+            var f4 = new Triangle(d, a, b).IsSameSide(c, p, includeOnFacet);
             return f1 && f2 && f3 && f4;
         }
 
@@ -45,42 +47,37 @@ namespace kmty.geom.d3 {
             throw new System.ArgumentOutOfRangeException();
         }
 
-        public Sphere GetCircumscribedSphere(double precisition) {
-            var triA = new Triangle(a, b, c);
-            var triB = new Triangle(b, c, d);
-            var cntr = Util3D.GetIntersectionPoint(
-                                new Line(triA.GetCircumCenter(precisition), triA.normal),
-                                new Line(triB.GetCircumCenter(precisition), triB.normal),
-                                precisition
-                                );
-            return new Sphere(cntr, distance(cntr, a));
-
-            #region another solver
+        Sphere GetCircumscribedSphere() {
             /// <summary>
             // http://mathworld.wolfram.com/Circumsphere.html
             /// </summary>
-            //var a2 = Vector3.Scale(a, a);
-            //var b2 = Vector3.Scale(b, b);
-            //var c2 = Vector3.Scale(c, c);
-            //var d2 = Vector3.Scale(d, d);
-            //var _a = Matrix4x4.zero;
-            //var _m = Matrix4x4.zero;
-            //_a.SetRow(0, new Vector4(a.x, a.y, a.z, 1));
-            //_a.SetRow(1, new Vector4(b.x, b.y, b.z, 1));
-            //_a.SetRow(2, new Vector4(c.x, c.y, c.z, 1));
-            //_a.SetRow(3, new Vector4(d.x, d.y, d.z, 1));
-            //_m.SetRow(0, new Vector4(a2.x + a2.y + a2.z, a.y, a.z, 1));
-            //_m.SetRow(1, new Vector4(b2.x + b2.y + b2.z, b.y, b.z, 1));
-            //_m.SetRow(2, new Vector4(c2.x + c2.y + c2.z, c.y, c.z, 1));
-            //_m.SetRow(3, new Vector4(d2.x + d2.y + d2.z, d.y, d.z, 1));
-            //var detA = _a.determinant;
-            //var detX = _m.determinant;
-            //var detY = _m.determinant * -1;
-            //var detZ = _m.determinant;
-            //var center = new Vector3(detX, detY, detZ) / (2 * detA);
-            //var radius = Vector3.Distance(center, a);
-            //return new Sphere(center, radius);
-            #endregion
+            var a2 = a * a; var a2ex = a2.x + a2.y + a2.z; 
+            var b2 = b * b; var b2ex = b2.x + b2.y + b2.z;
+            var c2 = c * c; var c2ex = c2.x + c2.y + c2.z;
+            var d2 = d * d; var d2ex = d2.x + d2.y + d2.z;
+            var detA = determinant(new double4x4(
+                a.x, a.y, a.z, 1,
+                b.x, b.y, b.z, 1,
+                c.x, c.y, c.z, 1,
+                d.x, d.y, d.z, 1));
+            var detX = determinant(new double4x4(
+                a2ex, a.y, a.z, 1,
+                b2ex, b.y, b.z, 1,
+                c2ex, c.y, c.z, 1,
+                d2ex, d.y, d.z, 1));
+            var detY = -determinant(new double4x4(
+                a2ex, a.x, a.z, 1,
+                b2ex, b.x, b.z, 1,
+                c2ex, c.x, c.z, 1,
+                d2ex, d.x, d.z, 1));
+            var detZ = determinant(new double4x4(
+                a2ex, a.x, a.y, 1,
+                b2ex, b.x, b.y, 1,
+                c2ex, c.x, c.y, 1,
+                d2ex, d.x, d.y, 1));
+            var ctr = new double3(detX, detY, detZ) / (2 * detA);
+            var rad = distance(ctr, a);
+            return new Sphere(ctr, rad);
         }
 
         public void Draw() {

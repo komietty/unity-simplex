@@ -12,7 +12,7 @@ namespace kmty.geom.d3 {
             radius = r;
         }
 
-        public bool Contains(double3 p, bool inclusive) {
+        public bool Contains(double3 p, bool inclusive = true) {
             if (inclusive) return lengthsq(p - center) <= radius * radius;
             else           return lengthsq(p - center) <  radius * radius;
         }

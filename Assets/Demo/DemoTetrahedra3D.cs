@@ -14,13 +14,13 @@ namespace demo {
 
         void Start() {
             t = Init();
-            circumscribedSphere = t.GetCircumscribedSphere(1e-15d);
+            circumscribedSphere = t.circumscribedSphere;
         }
 
         void Update() {
             if (Input.GetKey(KeyCode.Space)) {
                 t = Init();
-                circumscribedSphere = t.GetCircumscribedSphere(1e-15d);
+                circumscribedSphere = t.circumscribedSphere;
             }
         }
 
@@ -37,10 +37,10 @@ namespace demo {
             var c = circumscribedSphere.center;
             var r = circumscribedSphere.radius;
             GUI.Label(new Rect(10,  10, 300, 20), "CircumSpherePrecision");
-            GUI.Label(new Rect(10,  35, 300, 20), (length(t.a - c) - r).ToString("F15"));
-            GUI.Label(new Rect(10,  60, 300, 20), (length(t.b - c) - r).ToString("F15"));
-            GUI.Label(new Rect(10,  85, 300, 20), (length(t.c - c) - r).ToString("F15"));
-            GUI.Label(new Rect(10, 110, 300, 20), (length(t.d - c) - r).ToString("F15"));
+            GUI.Label(new Rect(10,  35, 300, 20), (length(t.a - c) - r).ToString("F16"));
+            GUI.Label(new Rect(10,  60, 300, 20), (length(t.b - c) - r).ToString("F16"));
+            GUI.Label(new Rect(10,  85, 300, 20), (length(t.c - c) - r).ToString("F16"));
+            GUI.Label(new Rect(10, 110, 300, 20), (length(t.d - c) - r).ToString("F16"));
         }
 
         void OnRenderObject() {
@@ -59,7 +59,7 @@ namespace demo {
 
         void OnDrawGizmos() {
             if (Application.isPlaying) {
-                var cs = t.GetCircumscribedSphere(1e-15d);
+                var cs = t.circumscribedSphere;
                 Gizmos.color = Color.green;
                 Gizmos.DrawCube((float3)cs.center, Vector3.one * 0.1f);
                 Gizmos.color = Color.white;

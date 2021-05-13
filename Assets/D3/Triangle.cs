@@ -1,33 +1,51 @@
 ﻿using UnityEngine;
-using System.Collections.Generic;
-using System.Linq;
 using System;
 using Unity.Mathematics;
 using static Unity.Mathematics.math;
+
+/*
+TODO:
+1.
+circumscribed center has to be deterniministically called because
+two vertical line has to cross each other because they are on same triangle
+2.
+hopefully create sorted list in certain order.
+ex.
+var s = new List<double3> {a, b, c}.OrderBy(v => v.x).ToList();
+var f = s[0] == s[1];
+if (f.x) {
+    if (f.y) s = s.OrderBy(v => v.z).ToList(); 
+    else     s = s.OrderBy(v => v.y).ToList();
+}
+and then assign b, c as certain rotation order
+*/
 
 namespace kmty.geom.d3 {
     public struct Triangle {
         public double3 a;
         public double3 b;
         public double3 c;
-        //public double3x3 points => double3x3(a, b, c);
+        public double3 circumscribedCenter;
+        public double3x3 points => double3x3(a, b, c);
         public double3 normal => normalize(cross(b - a, c - a));
+        public static double precision = 1e-15d;
 
         public Triangle(double3 a, double3 b, double3 c) {
             if (Equals(a, b) || Equals(b, c) || Equals(c, a)) Debug.LogWarning("not creating a triangle");
 
-            // hopefully create sorted list ...
-            //var s = new List<double3> { a, b, c }.OrderBy(v => v.x).ToList();
-            //var f = s[0] == s[1];
-            //if (f.x) {
-            //    if (f.y) s = s.OrderBy(v => v.z).ToList(); 
-            //    else     s = s.OrderBy(v => v.y).ToList();
-            //}
-            //if(cross(s[1] - s[0], s[2] - s[1]).z > 0)
-
             this.a = a;
             this.b = b;
             this.c = c;
+
+            var p1 = lerp(a, b, 0.5);
+            var p2 = lerp(b, c, 0.5);
+            var vecAB = b - a;
+            var vecBC = c - b;
+            var axis = normalize(cross(vecAB, vecBC));
+            var dir1 = normalize(cross(vecAB, axis));
+            var dir2 = normalize(cross(vecBC, axis));
+            var cntr =  Util3D.GetIntersectionPoint( new Line(p1, dir1), new Line(p2, dir2), precision);
+            this.circumscribedCenter = cntr;
         }
 
         public bool Equals(Triangle t) {
@@ -53,56 +71,36 @@ namespace kmty.geom.d3 {
         }
 
         public bool Intersects(Line l, out double3 p) {
-            // using cramer's rule
-            double3 origin = l.pos, ray = l.vec, e1 = b - a, e2 = c - a; 
-            var denominator = determinant(double3x3(e1, e2, -ray));
-            if (denominator == 0) {
-                Debug.LogWarning("line is paralleled");
-                p = default;
-                return false;
-            }
-
-            var d = origin - a;
-            var u = determinant(double3x3(d, e2, -ray)) / denominator;
-            var v = determinant(double3x3(e1, d, -ray)) / denominator;
-            var t = determinant(double3x3(e1, e2, d))   / denominator;
-
-            p = origin + ray * t;
-            return u > 0d && u < 1d && v > 0d && v < 1d && u + v < 1d;
+            if (!CramersLow(l.pos, l.vec, out double3 d, out p)) return false;
+            return d.x > 0 && d.x < 1 && d.y > 0 && d.y < 1 && d.x + d.y < 1;
         }
 
         public bool Intersects(Segment e, out double3 p, bool inclusive) {
-            // using cramer's rule
-            double3 origin = e.a, ray = normalize(e.b - e.a), e1 = b - a, e2 = c - a;
-            var denominator = determinant(double3x3(e1, e2, -ray));
-            if (denominator == 0) {
-                Debug.LogWarning("line is paralleled");
-                p = default;
-                return false;
-            }
-
-            var d = origin - a;
-            var u = determinant(double3x3(d, e2, -ray)) / denominator;
-            var v = determinant(double3x3(e1, d, -ray)) / denominator;
-            var t = determinant(double3x3(e1, e2, d))   / denominator;
-
-            p = origin + ray * t;
-            bool f1 = u > 0d && u < 1d && v > 0d && v < 1d && u + v < 1d;
-            bool f2 = t >  0 && t <  length(e.b - e.a); 
-            bool f3 = t >= 0 && t <= length(e.b - e.a);
+            if (!CramersLow(e.a, normalize(e.b - e.a), out double3 d, out p)) return false;
+            bool f1 = d.x > 0 && d.x < 1 && d.y > 0 && d.y < 1 && d.x + d.y < 1;
+            bool f2 = d.z >  0 && d.z <  length(e.b - e.a); 
+            bool f3 = d.z >= 0 && d.z <= length(e.b - e.a);
             return inclusive ? f1 && f3 : f1 && f2;
         }
 
-
-        public double3 GetCircumCenter(double threshold) {
-            var p1 = lerp(a, b, 0.5);
-            var p2 = lerp(b, c, 0.5);
-            var vecAB = b - a;
-            var vecBC = c - b;
-            var axis = normalize(cross(vecAB, vecBC));
-            var dir1 = normalize(cross(vecAB, axis));
-            var dir2 = normalize(cross(vecBC, axis));
-            return Util3D.GetIntersectionPoint(new Line(p1, dir1), new Line(p2, dir2), threshold);
+        bool CramersLow(double3 ogn, double3 ray, out double3 det, out double3 pos) {
+            // using cramer's rule
+            var e1 = b - a;
+            var e2 = c - a;
+            var denominator = determinant(double3x3(e1, e2, -ray));
+            if (denominator == 0) {
+                Debug.LogWarning("parallele");
+                det = default;
+                pos = default;
+                return false;
+            }
+            var d = ogn - a;
+            var u = determinant(double3x3(d, e2, -ray)) / denominator;
+            var v = determinant(double3x3(e1, d, -ray)) / denominator;
+            var t = determinant(double3x3(e1, e2, d))   / denominator;
+            pos = ogn + ray * t;
+            det = new double3(u, v, t);
+            return true;
         }
 
         #region drawer
@@ -117,7 +115,7 @@ namespace kmty.geom.d3 {
 
         public void DrawCircumCircle() {
             var nrm = normalize(cross(b - a, c - a));
-            var tsl = (float3)GetCircumCenter(1e-10d);
+            var tsl = (float3)circumscribedCenter;
             var qut = Quaternion.FromToRotation(Vector3.forward, (float3)nrm);
 
             GL.Begin(GL.LINE_STRIP);
