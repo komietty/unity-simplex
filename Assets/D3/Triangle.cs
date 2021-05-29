@@ -2,6 +2,7 @@
 using System;
 using Unity.Mathematics;
 using static Unity.Mathematics.math;
+using static kmty.geom.d3.Util3D;
 
 /*
 TODO:
@@ -30,6 +31,7 @@ namespace kmty.geom.d3 {
         public double3 normal => normalize(cross(b - a, c - a));
         public static double precision = 1e-15d;
 
+        public Triangle(Vector3 a, Vector3 b, Vector3 c) : this(CastV3D3(a), CastV3D3(b), CastV3D3(c)) { } 
         public Triangle(double3 a, double3 b, double3 c) {
             if (Equals(a, b) || Equals(b, c) || Equals(c, a)) Debug.LogWarning("not creating a triangle");
 
@@ -44,7 +46,7 @@ namespace kmty.geom.d3 {
             var axis = normalize(cross(vecAB, vecBC));
             var dir1 = normalize(cross(vecAB, axis));
             var dir2 = normalize(cross(vecBC, axis));
-            var cntr =  Util3D.GetIntersectionPoint( new Line(p1, dir1), new Line(p2, dir2), precision);
+            var cntr =  GetIntersectionPoint( new Line(p1, dir1), new Line(p2, dir2), precision);
             this.circumscribedCenter = cntr;
         }
 

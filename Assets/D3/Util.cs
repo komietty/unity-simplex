@@ -1,12 +1,13 @@
 ﻿using System;
 using Unity.Mathematics;
+using UnityEngine;
 using static Unity.Mathematics.math;
 
 namespace kmty.geom.d3 {
     public static class Util3D {
-        /// <summary>
-        /// https://qiita.com/tmakimoto/items/2da05225633272ef935c
-        /// </summary>
+
+        public static double3 CastV3D3(Vector3 a) => (double3)(float3)a;
+
         public static double3 GetIntersectionPoint(Line a, Line b, double threshold) {
             var alpha = dot(a.vec, b.vec);
             var r = a.pos - b.pos;

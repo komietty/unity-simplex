@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using Unity.Mathematics;
 using static Unity.Mathematics.math;
+using static kmty.geom.d3.Util3D;
 
 namespace kmty.geom.d3 {
     public class Tetrahedra {
@@ -12,6 +13,7 @@ namespace kmty.geom.d3 {
         public Triangle[] triangles => new Triangle[] { new Triangle(a, b, c), new Triangle(b, c, d), new Triangle(c, d, a), new Triangle(d, a, b) };
         public Sphere circumscribedSphere;
 
+        public Tetrahedra(Vector3 a, Vector3 b, Vector3 c, Vector3 d) : this(CastV3D3(a), CastV3D3(b), CastV3D3(c), CastV3D3(d)) { }
         public Tetrahedra(double3 a, double3 b, double3 c, double3 d) {
             if (Equals(a, b) || Equals(a, c) || Equals(a, d) || 
                 Equals(b, c) || Equals(b, d) || Equals(c, d))
