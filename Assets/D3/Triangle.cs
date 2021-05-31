@@ -72,17 +72,25 @@ namespace kmty.geom.d3 {
             return includeOnPlane ? d >= 0d : d > 0d;
         }
 
-        public bool Intersects(Line l, out double3 p) {
-            if (!CramersLow(l.pos, l.vec, out double3 d, out p)) return false;
-            return d.x > 0 && d.x < 1 && d.y > 0 && d.y < 1 && d.x + d.y < 1;
+        public bool Intersects(Line l, out double3 p, out bool isOnEdge) {
+            if (!CramersLow(l.pos, l.vec, out double3 d, out p)) {
+                isOnEdge = default;
+                return false;
+            }
+            isOnEdge = d.x == 0 || d.x == 1 || d.y == 0 || d.y == 1 || d.x + d.y == 1;
+            return d.x >= 0 && d.x <= 1 && d.y >= 0 && d.y <= 1 && d.x + d.y <= 1;
         }
 
-        public bool Intersects(Segment e, out double3 p, bool inclusive) {
-            if (!CramersLow(e.a, normalize(e.b - e.a), out double3 d, out p)) return false;
-            bool f1 = d.x > 0 && d.x < 1 && d.y > 0 && d.y < 1 && d.x + d.y < 1;
+        public bool Intersects(Segment e, out double3 p, out bool isOnEdge) {
+            if (!CramersLow(e.a, normalize(e.b - e.a), out double3 d, out p)) {
+                isOnEdge = default;
+                return false;
+            }
+            bool f1 = d.x >= 0 && d.x <= 1 && d.y >= 0 && d.y <= 1 && d.x + d.y <= 1;
             bool f2 = d.z >  0 && d.z <  length(e.b - e.a); 
             bool f3 = d.z >= 0 && d.z <= length(e.b - e.a);
-            return inclusive ? f1 && f3 : f1 && f2;
+            isOnEdge = d.x == 0 || d.x == 1 || d.y == 0 || d.y == 1 || d.x + d.y == 1;
+            return f1 && f3;
         }
 
         bool CramersLow(double3 ogn, double3 ray, out double3 det, out double3 pos) {

@@ -82,21 +82,15 @@ namespace kmty.geom.d3 {
             return new Sphere(ctr, rad);
         }
 
+        public void Log() { Debug.Log($"a:{a}, b:{b}, c:{c}, d:{d}"); }
         public void Draw() {
-            GL.Begin(GL.LINE_STRIP);
-            GL.Vertex((float3)a);
-            GL.Vertex((float3)b);
-            GL.Vertex((float3)c);
-            GL.Vertex((float3)a);
-            GL.End();
-            GL.Begin(GL.LINE_STRIP);
-            GL.Vertex((float3)a);
-            GL.Vertex((float3)d);
-            GL.Vertex((float3)c);
-            GL.End();
             GL.Begin(GL.LINES);
-            GL.Vertex((float3)d);
-            GL.Vertex((float3)b);
+            GL.Vertex((float3)a); GL.Vertex((float3)b);
+            GL.Vertex((float3)b); GL.Vertex((float3)c);
+            GL.Vertex((float3)c); GL.Vertex((float3)a);
+            GL.Vertex((float3)a); GL.Vertex((float3)d);
+            GL.Vertex((float3)b); GL.Vertex((float3)d);
+            GL.Vertex((float3)c); GL.Vertex((float3)d);
             GL.End();
         }
     }
