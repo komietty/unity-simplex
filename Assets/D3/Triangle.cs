@@ -1,6 +1,5 @@
 ﻿using UnityEngine;
 using System;
-using Unity.Mathematics;
 using static Unity.Mathematics.math;
 using static kmty.geom.d3.Util3D;
 
@@ -22,17 +21,23 @@ and then assign b, c as certain rotation order
 */
 
 namespace kmty.geom.d3 {
+using V3  = UnityEngine.Vector3;
+using f3  = Unity.Mathematics.float3;
+using d3  = Unity.Mathematics.double3;
+using d33 = Unity.Mathematics.double3x3;
+
     public struct Triangle {
-        public double3 a;
-        public double3 b;
-        public double3 c;
-        public double3 circumscribedCenter;
-        public double3x3 points => double3x3(a, b, c);
-        public double3 normal => normalize(cross(b - a, c - a));
+        public d3 a;
+        public d3 b;
+        public d3 c;
+        public d3 circumscribedCenter;
+        public d3 normal => normalize(cross(b - a, c - a));
+        public d33 points => double3x3(a, b, c);
         public static double precision = 1e-15d;
 
-        public Triangle(Vector3 a, Vector3 b, Vector3 c) : this(CastV3D3(a), CastV3D3(b), CastV3D3(c)) { } 
-        public Triangle(double3 a, double3 b, double3 c) {
+        public Triangle(V3 a, V3 b, V3 c) : this(CastV3D3(a), CastV3D3(b), CastV3D3(c)) { } 
+        public Triangle(Segment s, d3 p) : this(s.a, s.b, p) { } 
+        public Triangle(d3 a, d3 b, d3 c) {
             if (Equals(a, b) || Equals(b, c) || Equals(c, a)) Debug.LogWarning("not creating a triangle");
 
             this.a = a;
@@ -60,20 +65,20 @@ namespace kmty.geom.d3 {
             return f1 || f2 || f3 || f4 || f5 || f6;
         }
 
-        public Segment Remaining(double3 p) {
+        public Segment Remaining(d3 p) {
             if      (Equals(p, a)) return new Segment(b, c);
             else if (Equals(p, b)) return new Segment(c, a);
             else if (Equals(p, c)) return new Segment(a, b);
             throw new ArgumentOutOfRangeException();
         }
 
-        public bool IsSameSide(double3 p1, double3 p2, bool includeOnPlane) {
+        public bool IsSameSide(d3 p1, d3 p2, bool includeOnPlane) {
             double d = dot(normal, p1 - a) * dot(normal, p2 - a);
             return includeOnPlane ? d >= 0d : d > 0d;
         }
 
-        public bool Intersects(Line l, out double3 p, out bool isOnEdge) {
-            if (!CramersLow(l.pos, l.vec, out double3 d, out p)) {
+        public bool Intersects(Line l, out d3 p, out bool isOnEdge) {
+            if (!CramersLow(l.pos, l.vec, out d3 d, out p)) {
                 isOnEdge = default;
                 return false;
             }
@@ -81,8 +86,8 @@ namespace kmty.geom.d3 {
             return d.x >= 0 && d.x <= 1 && d.y >= 0 && d.y <= 1 && d.x + d.y <= 1;
         }
 
-        public bool Intersects(Segment e, out double3 p, out bool isOnEdge) {
-            if (!CramersLow(e.a, normalize(e.b - e.a), out double3 d, out p)) {
+        public bool Intersects(Segment e, out d3 p, out bool isOnEdge) {
+            if (!CramersLow(e.a, normalize(e.b - e.a), out d3 d, out p)) {
                 isOnEdge = default;
                 return false;
             }
@@ -93,7 +98,7 @@ namespace kmty.geom.d3 {
             return f1 && f3;
         }
 
-        bool CramersLow(double3 ogn, double3 ray, out double3 det, out double3 pos) {
+        bool CramersLow(d3 ogn, d3 ray, out d3 det, out d3 pos) {
             // using cramer's rule
             var e1 = b - a;
             var e2 = c - a;
@@ -109,29 +114,29 @@ namespace kmty.geom.d3 {
             var v = determinant(double3x3(e1, d, -ray)) / denominator;
             var t = determinant(double3x3(e1, e2, d))   / denominator;
             pos = ogn + ray * t;
-            det = new double3(u, v, t);
+            det = new d3(u, v, t);
             return true;
         }
 
         #region drawer
         public void Draw() {
             GL.Begin(GL.LINE_STRIP);
-            GL.Vertex((float3)a);
-            GL.Vertex((float3)b);
-            GL.Vertex((float3)c);
-            GL.Vertex((float3)a);
+            GL.Vertex((f3)a);
+            GL.Vertex((f3)b);
+            GL.Vertex((f3)c);
+            GL.Vertex((f3)a);
             GL.End();
         }
 
         public void DrawCircumCircle() {
             var nrm = normalize(cross(b - a, c - a));
-            var tsl = (float3)circumscribedCenter;
-            var qut = Quaternion.FromToRotation(Vector3.forward, (float3)nrm);
+            var tsl = (f3)circumscribedCenter;
+            var qut = Quaternion.FromToRotation(V3.forward, (f3)nrm);
 
             GL.Begin(GL.LINE_STRIP);
             for (float j = 0; j < Mathf.PI * 2.1f; j += Mathf.PI * 0.03f) {
                 var pnt = double3(cos(j), sin(j), 0) * distance(tsl, a);
-                var pos = qut * (float3)pnt + (Vector3)tsl;
+                var pos = qut * (f3)pnt + (V3)tsl;
                 GL.Vertex(pos);
             }
             GL.End();
