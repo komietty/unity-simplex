@@ -4,11 +4,15 @@ using UnityEngine;
 using static Unity.Mathematics.math;
 
 namespace kmty.geom.d3 {
+    using V3 = Vector3;
+    using f3 = float3;
+    using d3 = double3;
+    using SG = Segment;
     public static class Util3D {
 
-        public static double3 CastV3D3(Vector3 a) => (double3)(float3)a;
+        public static d3 CastV3D3(V3 a) => (d3)(f3)a;
 
-        public static double3 GetIntersectionPoint(Line a, Line b, double threshold) {
+        public static d3 GetIntersectionPoint(Line a, Line b, double threshold) {
             var alpha = dot(a.vec, b.vec);
             var r = a.pos - b.pos;
             var rho = dot(r, a.vec - alpha * b.vec) / (alpha * alpha - 1d);
@@ -19,17 +23,17 @@ namespace kmty.geom.d3 {
             throw new ArgumentException();
         }
 
-        public static bool IsIntersecting(Segment e1, Segment e2, double threshold) {
-            IsIntersecting(e1, e2, out bool f, out double3 p, threshold);
+        public static bool IsIntersecting(SG e1, SG e2, double threshold) {
+            IsIntersecting(e1, e2, out bool f, out d3 p, threshold);
             return f;
         }
 
-        public static double3 GetIntersectionPoint(Segment e1, Segment e2, double threshold) {
-            IsIntersecting(e1, e2, out bool f, out double3 p, threshold);
+        public static d3 GetIntersectionPoint(SG e1, SG e2, double threshold) {
+            IsIntersecting(e1, e2, out bool f, out d3 p, threshold);
             return p;
         }
 
-        static void IsIntersecting(Segment e1, Segment e2, out bool flag, out double3 pos, double threshold) {
+        static void IsIntersecting(SG e1, SG e2, out bool flag, out d3 pos, double threshold) {
             var v1 = e1.b - e1.a;
             var v2 = e2.b - e2.a;
             var n1 = normalize(v1);

@@ -21,10 +21,11 @@ and then assign b, c as certain rotation order
 */
 
 namespace kmty.geom.d3 {
-using V3  = UnityEngine.Vector3;
-using f3  = Unity.Mathematics.float3;
-using d3  = Unity.Mathematics.double3;
-using d33 = Unity.Mathematics.double3x3;
+    using V3 = UnityEngine.Vector3;
+    using f3 = Unity.Mathematics.float3;
+    using d3 = Unity.Mathematics.double3;
+    using d33 = Unity.Mathematics.double3x3;
+    using SG = Segment;
 
     public struct Triangle {
         public d3 a;
@@ -35,8 +36,8 @@ using d33 = Unity.Mathematics.double3x3;
         public d33 points => double3x3(a, b, c);
         public static double precision = 1e-15d;
 
+        public Triangle(SG s, d3 p) : this(s.a, s.b, p) { } 
         public Triangle(V3 a, V3 b, V3 c) : this(CastV3D3(a), CastV3D3(b), CastV3D3(c)) { } 
-        public Triangle(Segment s, d3 p) : this(s.a, s.b, p) { } 
         public Triangle(d3 a, d3 b, d3 c) {
             if (Equals(a, b) || Equals(b, c) || Equals(c, a)) Debug.LogWarning("not creating a triangle");
 
@@ -65,10 +66,10 @@ using d33 = Unity.Mathematics.double3x3;
             return f1 || f2 || f3 || f4 || f5 || f6;
         }
 
-        public Segment Remaining(d3 p) {
-            if      (Equals(p, a)) return new Segment(b, c);
-            else if (Equals(p, b)) return new Segment(c, a);
-            else if (Equals(p, c)) return new Segment(a, b);
+        public SG Remaining(d3 p) {
+            if      (Equals(p, a)) return new SG(b, c);
+            else if (Equals(p, b)) return new SG(c, a);
+            else if (Equals(p, c)) return new SG(a, b);
             throw new ArgumentOutOfRangeException();
         }
 
@@ -86,13 +87,12 @@ using d33 = Unity.Mathematics.double3x3;
             return d.x >= 0 && d.x <= 1 && d.y >= 0 && d.y <= 1 && d.x + d.y <= 1;
         }
 
-        public bool Intersects(Segment e, out d3 p, out bool isOnEdge) {
+        public bool Intersects(SG e, out d3 p, out bool isOnEdge) {
             if (!CramersLow(e.a, normalize(e.b - e.a), out d3 d, out p)) {
                 isOnEdge = default;
                 return false;
             }
             bool f1 = d.x >= 0 && d.x <= 1 && d.y >= 0 && d.y <= 1 && d.x + d.y <= 1;
-            bool f2 = d.z >  0 && d.z <  length(e.b - e.a); 
             bool f3 = d.z >= 0 && d.z <= length(e.b - e.a);
             isOnEdge = d.x == 0 || d.x == 1 || d.y == 0 || d.y == 1 || d.x + d.y == 1;
             return f1 && f3;
