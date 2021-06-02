@@ -1,22 +1,17 @@
 # unity-simplex-geometry
 
-Simplex geometry utility library on 2D/3D. If you are looking for some circumCircle/circumSphere method on 2D/3D, this will help you.
+Simplex geometry utility library on 2D/3D.
+This library includes below.
 
-## Usage
+- Segment(2D/3D)
+- Triangle(2D/3D)
+- Tetrahedra(3D)
+- Circle(2D)
+- Sphere(3D)
+
+If you are looking for some circumCircle/circumSphere method on 2D/3D, this will help you.
 
 This library is based on Unity.Mathematics SIMD library, be sure to install them beforehand (ver 1.1.0).
-
-If you wanna just use modules, type below, then remove unnecessary files.
-```
-git submodule add git@github.com:komietty/unity-simplex-geometry.git Assets/Packages/unity-simplex-geometry
-git commit -m "add module"
-cd Assets/Packages/unity-simplex-geometry
-git config core.sparsecheckout true
-echo "Assets/D2" >  ../../../.git/modules/Assets/Packages/unity-simplex-geometry/info/sparse-checkout
-echo "Assets/D3" >> ../../../.git/modules/Assets/Packages/unity-simplex-geometry/info/sparse-checkout
-git read-tree -m -u HEAD
-```
-
 
 ## License
 [MIT](LICENSE)
