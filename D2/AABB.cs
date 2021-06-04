@@ -3,7 +3,6 @@ using Unity.Mathematics;
 using static Unity.Mathematics.math;
 
 namespace kmty.geom.d2 {
-
     [System.Serializable]
     public class AABB {
         public float2 Min => min;
@@ -28,5 +27,27 @@ namespace kmty.geom.d2 {
 
         public bool ContainsX(float x, float offset = 0f) => min.x + offset <= x && x <= max.x - offset;
         public bool ContainsY(float y, float offset = 0f) => min.y + offset <= y && y <= max.y - offset;
+    }
+
+    public class Rectangle : AABB {
+        public Segment Left => l;
+        public Segment Top => t;
+        public Segment Right => r;
+        public Segment Bottom => b;
+        protected Segment l, t, r, b;
+
+        public Rectangle(Vector2 min, Vector2 max) : base(min, max) {
+            l = new Segment(float2(this.min.x, this.max.y), float2(this.min.x, this.min.y));
+            t = new Segment(float2(this.min.x, this.max.y), float2(this.max.x, this.max.y));
+            r = new Segment(float2(this.max.x, this.max.y), float2(this.max.x, this.min.y));
+            b = new Segment(float2(this.min.x, this.min.y), float2(this.max.x, this.min.y));
+        }
+
+        public void DrawGizmos() {
+            l.DrawGizmos();
+            t.DrawGizmos();
+            r.DrawGizmos();
+            b.DrawGizmos();
+        }
     }
 }
