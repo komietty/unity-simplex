@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using System;
+using Unity.Mathematics;
 using static Unity.Mathematics.math;
 using static kmty.geom.d3.Util3D;
 
@@ -21,61 +22,36 @@ and then assign b, c as certain rotation order
 */
 
 namespace kmty.geom.d3 {
-    using V3 = UnityEngine.Vector3;
-    using f3 = Unity.Mathematics.float3;
-    using d3 = Unity.Mathematics.double3;
-    using d33 = Unity.Mathematics.double3x3;
+    using V3 = Vector3;
+    using f3 = float3;
+    using d3 = double3;
     using SG = Segment;
 
-    public struct Triangle {
+    public struct Triangle : IEquatable<Triangle> {
         public d3 a;
         public d3 b;
         public d3 c;
-        public d3 circumscribedCenter;
-        public d3 normal => normalize(cross(b - a, c - a));
-        public d33 points => double3x3(a, b, c);
-        public static double precision = 1e-15d;
+        public d3 n => normalize(cross(b - a, c - a));
 
         public Triangle(SG s, d3 p) : this(s.a, s.b, p) { } 
-        public Triangle(V3 a, V3 b, V3 c) : this(CastV3D3(a), CastV3D3(b), CastV3D3(c)) { } 
-        public Triangle(d3 a, d3 b, d3 c) {
-            if (Equals(a, b) || Equals(b, c) || Equals(c, a)) Debug.LogWarning("not creating a triangle");
-
-            this.a = a;
-            this.b = b;
-            this.c = c;
-
-            var p1 = lerp(a, b, 0.5);
-            var p2 = lerp(b, c, 0.5);
-            var vecAB = b - a;
-            var vecBC = c - b;
-            var axis = normalize(cross(vecAB, vecBC));
-            var dir1 = normalize(cross(vecAB, axis));
-            var dir2 = normalize(cross(vecBC, axis));
-            var cntr =  GetIntersectionPoint( new Line(p1, dir1), new Line(p2, dir2), precision);
-            this.circumscribedCenter = cntr;
-        }
-
-        public bool Equals(Triangle t) {
-            var f1 = Equals(t.a, a) && Equals(t.b, b) && Equals(t.c, c);
-            var f2 = Equals(t.b, a) && Equals(t.c, b) && Equals(t.a, c);
-            var f3 = Equals(t.c, a) && Equals(t.a, b) && Equals(t.b, c);
-            var f4 = Equals(t.a, a) && Equals(t.c, b) && Equals(t.b, c);
-            var f5 = Equals(t.b, a) && Equals(t.a, b) && Equals(t.c, c);
-            var f6 = Equals(t.c, a) && Equals(t.b, b) && Equals(t.a, c);
-            return f1 || f2 || f3 || f4 || f5 || f6;
+        public Triangle(V3 p1, V3 p2, V3 p3) : this(CastV3D3(p1), CastV3D3(p2), CastV3D3(p3)) { } 
+        public Triangle(d3 p1, d3 p2, d3 p3) {
+            if (Equals(p1, p2) || Equals(p2, p3) || Equals(p3, p1)) throw new Exception();
+            this.a = p1;
+            this.b = p2;
+            this.c = p3;
         }
 
         public SG Remaining(d3 p) {
-            if      (Equals(p, a)) return new SG(b, c);
-            else if (Equals(p, b)) return new SG(c, a);
-            else if (Equals(p, c)) return new SG(a, b);
-            throw new ArgumentOutOfRangeException();
+            if      (p.Equals(a)) return new SG(b, c);
+            else if (p.Equals(b)) return new SG(c, a);
+            else if (p.Equals(c)) return new SG(a, b);
+            throw new Exception();
         }
 
         public bool IsSameSide(d3 p1, d3 p2, bool includeOnPlane) {
-            double d = dot(normal, p1 - a) * dot(normal, p2 - a);
-            return includeOnPlane ? d >= 0d : d > 0d;
+            double d = dot(n, p1 - a) * dot(n, p2 - a);
+            return includeOnPlane ? d >= 0 : d > 0;
         }
 
         public bool Intersects(Line l, out d3 p, out bool isOnEdge) {
@@ -93,9 +69,9 @@ namespace kmty.geom.d3 {
                 return false;
             }
             bool f1 = d.x >= 0 && d.x <= 1 && d.y >= 0 && d.y <= 1 && d.x + d.y <= 1;
-            bool f3 = d.z >= 0 && d.z <= length(e.b - e.a);
+            bool f2 = d.z >= 0 && d.z <= length(e.b - e.a);
             isOnEdge = d.x == 0 || d.x == 1 || d.y == 0 || d.y == 1 || d.x + d.y == 1;
-            return f1 && f3;
+            return f1 && f2;
         }
 
         bool CramersLow(d3 ogn, d3 ray, out d3 det, out d3 pos) {
@@ -118,6 +94,18 @@ namespace kmty.geom.d3 {
             return true;
         }
 
+        d3 GetCircumscribedCenter() { 
+            var pab = lerp(a, b, 0.5);
+            var pbc = lerp(b, c, 0.5);
+            var vab = b - a;
+            var vbc = c - b;
+            var axis = normalize(cross(vab, vbc));
+            var d1 = normalize(cross(vab, axis));
+            var d2 = normalize(cross(vbc, axis));
+            var precision = 1e-15d;
+            return GetIntersectionPoint(new Line(pab, d1), new Line(pbc, d2), precision);
+        }
+
         #region drawer
         public void Draw() {
             GL.Begin(GL.LINE_STRIP);
@@ -130,7 +118,7 @@ namespace kmty.geom.d3 {
 
         public void DrawCircumCircle() {
             var nrm = normalize(cross(b - a, c - a));
-            var tsl = (f3)circumscribedCenter;
+            var tsl = (f3)GetCircumscribedCenter();
             var qut = Quaternion.FromToRotation(V3.forward, (f3)nrm);
 
             GL.Begin(GL.LINE_STRIP);
@@ -140,6 +128,30 @@ namespace kmty.geom.d3 {
                 GL.Vertex(pos);
             }
             GL.End();
+        }
+        #endregion
+
+        #region IEquatable
+        public override bool Equals(object obj) { return obj is Triangle triangle && Equals(triangle); }
+        public static bool operator ==(Triangle left, Triangle right) { return left.Equals(right); }
+        public static bool operator !=(Triangle left, Triangle right) { return !(left == right); }
+
+        public bool Equals(Triangle t) {
+            if(Equals(t.a, a) && Equals(t.b, b) && Equals(t.c, c)) return true;
+            if(Equals(t.b, a) && Equals(t.c, b) && Equals(t.a, c)) return true;
+            if(Equals(t.c, a) && Equals(t.a, b) && Equals(t.b, c)) return true;
+            if(Equals(t.a, a) && Equals(t.c, b) && Equals(t.b, c)) return true;
+            if(Equals(t.b, a) && Equals(t.a, b) && Equals(t.c, c)) return true;
+            if(Equals(t.c, a) && Equals(t.b, b) && Equals(t.a, c)) return true;
+            return false;
+        }
+
+        public override int GetHashCode() {
+            int hashCode = 1474027755;
+            hashCode = hashCode * -1521134295 + a.GetHashCode();
+            hashCode = hashCode * -1521134295 + b.GetHashCode();
+            hashCode = hashCode * -1521134295 + c.GetHashCode();
+            return hashCode;
         }
         #endregion
     }
