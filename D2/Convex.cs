@@ -81,9 +81,10 @@ namespace kmty.geom.d2 {
 
 
         public void Draw() {
+            var l = points.Length;
             GL.Begin(GL.LINE_STRIP);
-            for (int i = 0; i < points.Length; i++) GL.Vertex(new f3(points[i], 0));
-            GL.Vertex(new f3(points[0], 0));
+            for (int i = 0; i <= l; i++)
+                GL.Vertex(new f3(points[i % l], 0));
             GL.End();
         }
     }

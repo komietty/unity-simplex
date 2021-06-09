@@ -43,9 +43,9 @@ namespace kmty.geom.d3 {
         }
 
         public SG Remaining(d3 p) {
-            if      (p.Equals(a)) return new SG(b, c);
-            else if (p.Equals(b)) return new SG(c, a);
-            else if (p.Equals(c)) return new SG(a, b);
+            if (p.Equals(a)) return new SG(b, c);
+            if (p.Equals(b)) return new SG(c, a);
+            if (p.Equals(c)) return new SG(a, b);
             throw new Exception();
         }
 
