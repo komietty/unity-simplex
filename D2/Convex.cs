@@ -11,8 +11,8 @@ namespace kmty.geom.d2 {
     using SG = Segment;
 
     public class Convex {
-        public IEnumerable<f2> originals;
-        public f2[] points { get; protected set; }
+        private IEnumerable<f2> outsides;
+        public f2[] points  { get; protected set; }
         public SG[] segments { get; protected set; }
         public AABB aabb { get; protected set; }
 
@@ -20,11 +20,11 @@ namespace kmty.geom.d2 {
             var xsrt = originals.OrderBy(p => p.x);
             var xmin = xsrt.First();
             var xmax = xsrt.Last();
-            var dsrt = originals.OrderBy(p => Dist(new SG(xmin, xmax), p));
+            var dsrt = originals.OrderBy(p => DistFactor(new SG(xmin, xmax), p));
             var dmin = dsrt.First();
             var dmax = dsrt.Last();
-            this.originals = originals;
-            this.points = new f2[] { xmin, dmin, xmax, dmax };
+            this.outsides = originals;
+            this.points  = new f2[] { xmin, dmin, xmax, dmax };
             Reset();
         }
 
@@ -45,9 +45,9 @@ namespace kmty.geom.d2 {
             this.aabb = new AABB(new f2(xmin, ymin), new f2(xmax, ymax));
         }
 
-        public float Dist(SG s, f2 p) => cross(new f3(s.b - s.a, 0), new f3(p - s.a, 0)).z;
+        float DistFactor(SG s, f2 p) => cross(new f3(s.b - s.a, 0), new f3(p - s.a, 0)).z;
 
-        public bool Contains(f2 p) {
+        bool Contains(f2 p) {
             foreach (var s in segments) {
                 if (cross(new f3(s.b - s.a, 0), new f3(p - s.a, 0)).z < 0) return false;
             }
@@ -56,29 +56,25 @@ namespace kmty.geom.d2 {
 
         public void ExpandLoop(int maxitr = int.MaxValue) {
             int itr = 0;
-            while (itr < maxitr) {
-                itr++;
-                if (!Expand()) break;
-            }
+            while (itr < maxitr) { itr++; if (!Expand()) break; }
         }
 
         public bool Expand() {
-            var outs = originals.Where(p => !Contains(p));
-            if (outs.Count() == 0) return false;
-            var list = new List<f2>();
+            outsides = outsides.Where(p => !Contains(p));
+            if (outsides.Count() == 0) return false;
+            var l = new List<f2>();
             foreach (var s in segments) {
-                var srt = outs.OrderBy(p => Dist(s, p));
-                list.Add(s.a);
-                if (srt.Count() > 0) {
-                    var f = srt.First();
-                    if (Dist(s, f) < 0) list.Add(f);
+                var sort = outsides.OrderBy(p => DistFactor(s, p));
+                l.Add(s.a);
+                if (sort.Count() > 0) {
+                    var f = sort.First();
+                    if (DistFactor(s, f) < 0) l.Add(f);
                 }
             }
-            points = list.ToArray();
+            points = l.ToArray();
             Reset();
             return true;
         }
-
 
         public void Draw() {
             var l = points.Length;

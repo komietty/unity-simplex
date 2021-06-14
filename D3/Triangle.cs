@@ -28,9 +28,9 @@ namespace kmty.geom.d3 {
     using SG = Segment;
 
     public struct Triangle : IEquatable<Triangle> {
-        public d3 a;
-        public d3 b;
-        public d3 c;
+        public d3 a { get; }
+        public d3 b { get; }
+        public d3 c { get; }
         public d3 n => normalize(cross(b - a, c - a));
 
         public Triangle(SG s, d3 p) : this(s.a, s.b, p) { } 
@@ -41,6 +41,8 @@ namespace kmty.geom.d3 {
             this.b = p2;
             this.c = p3;
         }
+
+        public bool HasVert(d3 p) => p.Equals(a) || p.Equals(b) || p.Equals(c);
 
         public SG Remaining(d3 p) {
             if (p.Equals(a)) return new SG(b, c);
@@ -94,7 +96,16 @@ namespace kmty.geom.d3 {
             return true;
         }
 
-        d3 GetCircumscribedCenter() { 
+        // TODO: Test
+        // ref : https://cvtech.cc/pointdist/
+        public d3 Distance(d3 p) {
+            var v = length(cross(p - a, dot(p - b, p - c))) / 6d;
+            var s = length(cross(b - a, c - a)) / 2d;
+            return 3 * v / s;
+        }
+
+        public d3 GetGravityCenter() { return (a + b + c) / 3d; }
+        public d3 GetCircumCenter() {
             var pab = lerp(a, b, 0.5);
             var pbc = lerp(b, c, 0.5);
             var vab = b - a;
@@ -118,13 +129,13 @@ namespace kmty.geom.d3 {
 
         public void DrawCircumCircle() {
             var nrm = normalize(cross(b - a, c - a));
-            var tsl = (f3)GetCircumscribedCenter();
+            var crc = (f3)GetCircumCenter();
             var qut = Quaternion.FromToRotation(V3.forward, (f3)nrm);
 
             GL.Begin(GL.LINE_STRIP);
             for (float j = 0; j < Mathf.PI * 2.1f; j += Mathf.PI * 0.03f) {
-                var pnt = double3(cos(j), sin(j), 0) * distance(tsl, a);
-                var pos = qut * (f3)pnt + (V3)tsl;
+                var pnt = double3(cos(j), sin(j), 0) * distance(crc, a);
+                var pos = qut * (f3)pnt + (V3)crc;
                 GL.Vertex(pos);
             }
             GL.End();
