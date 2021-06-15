@@ -16,7 +16,6 @@ namespace kmty.geom.d3 {
         private IEnumerable<f3> outsides;
         public AABB aabb       { get; protected set; }
         public List<TN> nodes  { get; protected set; }
-        public List<d3> vrtcs  { get; protected set; }
         public d3 centroid     { get; protected set; }
 
         public Stack<TN> taggeds { get; protected set; } // node that will be removed
@@ -41,7 +40,6 @@ namespace kmty.geom.d3 {
             n3.neighbors = new List<TN>() { n0, n1, n2 };
 
             this.nodes = new List<TN>() { n0, n1, n2, n3 };
-            this.vrtcs = new List<d3>() { p0, p1, p2, p3 };
             this.outsides = originals;
             this.taggeds = new Stack<TN>();
             this.contour = new Stack<(TN n, SG s)>();
@@ -53,11 +51,8 @@ namespace kmty.geom.d3 {
         }
 
         public bool Expand() {
-            Assert.IsTrue(taggeds.Count() == 0);
-            Assert.IsTrue(contour.Count() == 0);
             outsides = outsides.Where(p => !Contains(p));
             if (outsides.Count() == 0) return false;
-
             var _f = false;
             TN  _n = default;
             f3  _p = default;
@@ -73,18 +68,44 @@ namespace kmty.geom.d3 {
                 taggeds.Push(_n);
                 foreach (var nei in _n.neighbors) NeighborSearch(nei, _n, _p);
 
+
+                // debug
+                var c1 = new HashSet<d3>();
+                foreach (var c in contour) {
+                    c1.Add(c.s.a);
+                    c1.Add(c.s.b);
+                }
+                if(!(c1.Count == contour.Count)) {
+                    Debug.LogWarning(c1.Count);
+                    Debug.LogWarning(contour.Count);
+
+                    int i = 0;
+                    foreach (var c in contour) {
+                        Debug.LogWarning($"{i}, n:{c.n.center}, a: {c.s.a}, b: {c.s.b}");
+                        i++;
+                    }
+                }
+                var c2 = c1.ToDictionary(c => c, c => 0);
+                foreach (var c in contour) {
+                    c2[c.s.a]++;
+                    c2[c.s.b]++;
+                }
+                foreach (var v in c2.Values) {
+                    Assert.IsTrue(v == 2);
+                }
+
+
                 // remove fase
                 while (taggeds.Count > 0) {
                     var n = taggeds.Pop();
-                    foreach (var nei in n.neighbors) {
-                        nei.neighbors.Remove(n);
-                    }
+                    foreach (var nei in n.neighbors) { nei.neighbors.Remove(n); }
                     nodes.Remove(n);
                     RollbackCentroid(n);
+                    n = null;
                 }
 
-                // create fase
-                var list = new List<(TN n, d3 a, d3 b)>();
+                // create cone
+                var cone = new List<(TN n, d3 a, d3 b)>();
                 while (contour.Count > 0) {
                     var c = contour.Pop();
                     var pair = c.n;
@@ -93,47 +114,64 @@ namespace kmty.geom.d3 {
                     curr.neighbors.Add(pair);
                     pair.neighbors.Add(curr);
 
-                    foreach (var l in list) {
+                    //foreach (var l in list) {
+                    for(var i = 0; i < cone.Count; i++) {
+                        var l = cone[i];
+                        Assert.IsTrue(curr.neighbors.Count <= 3);
+                        //Assert.IsTrue(l.n.neighbors.Count <= 3);
                         if (sgmt.a.Equals(l.a) || sgmt.a.Equals(l.b) || sgmt.b.Equals(l.a) || sgmt.b.Equals(l.b)) {
-                            if(!l.n.neighbors.Contains(curr)) l.n.neighbors.Add(curr);
+                            if (!l.n.neighbors.Contains(curr)) l.n.neighbors.Add(curr);
+                            else throw new System.Exception();
                             if(!curr.neighbors.Contains(l.n)) curr.neighbors.Add(l.n);
+                            else throw new System.Exception();
                         }
                     }
-                    list.Add((curr, sgmt.a, sgmt.b));
+                    cone.Add((curr, sgmt.a, sgmt.b));
+                    foreach (var l in cone) l.n.SetNormal(this.centroid);
                     UpdateCentroid(curr);
                 }
 
-                nodes.AddRange(list.Select(l => l.n));
+                nodes.AddRange(cone.Select(l => l.n));
                 foreach (var n in nodes) { n.SetNormal(this.centroid); }
             }
 
+            //check
             foreach (var n in nodes) {
-                //Assert.IsTrue(n.neighbors.Count == 3);
                 if (n.neighbors.Count != 3) {
-                    Debug.Log(n.neighbors.Count);
+                    var p = new HashSet<d3>();
+                    n.neighbors.ForEach(_n => {
+                        p.Add(_n.a);
+                        p.Add(_n.b);
+                        p.Add(_n.c);
+                    });
+                    Assert.IsTrue(p.Count <= 6 && p.Count >= 4);
+                    Debug.Log(p.Count);
                 }
-                foreach (var nei in n.neighbors) {
-                    Assert.IsTrue(nei != null);
-                }
+                foreach (var nei in n.neighbors) { Assert.IsTrue(nei != null); }
             }
             return _f;
         }
 
 
+        // consider degenerated case or numerical problem
+        double h = 1e-10d;
         void NeighborSearch(TN curr, TN pair, f3 p) {
-            if (dot(p - curr.a, curr.normal) >= 0) {
+            if (dot(p - curr.a, curr.normal) > h &&
+                dot(p - curr.b, curr.normal) > h &&
+                dot(p - curr.c, curr.normal) > h) {
                 taggeds.Push(curr);
                 foreach (var n in curr.neighbors) {
                     if (!taggeds.Contains(n)) NeighborSearch(n, curr, p);
                 }
             } else {
-                contour.Push((curr, curr.Common(pair)));
+                var t = (curr, curr.Common(pair));
+                if (!contour.Contains(t)) contour.Push(t);
             }
         }
 
         public bool Contains(f3 p) {
-            // this make it somehow better but dun know why...
             foreach (var n in nodes) {
+                //if (dot(p - n.a, n.normal) > 1e-7d) return false;
                 if (dot(p - n.a, n.normal) > 0 &&
                     dot(p - n.b, n.normal) > 0 && 
                     dot(p - n.c, n.normal) > 0) return false;
@@ -159,10 +197,6 @@ namespace kmty.geom.d3 {
             for (int i = 0; i < nodes.Count; i++) {
                 var n = nodes[i];
                 n.t.Draw();
-                //GL.Begin(GL.LINES);
-                //GL.Vertex((f3)n.t.GetGravityCenter());
-                //GL.Vertex((f3)n.t.GetGravityCenter() + (f3)n.normal * 0.5f);
-                //GL.End();
             }
         }
     }
