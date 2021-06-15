@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using Unity.Mathematics;
-using UnityEngine.Assertions;
 using static Unity.Mathematics.math;
 
 namespace kmty.geom.d3 {
@@ -17,9 +16,9 @@ namespace kmty.geom.d3 {
         public AABB aabb       { get; protected set; }
         public List<TN> nodes  { get; protected set; }
         public d3 centroid     { get; protected set; }
-
-        public Stack<TN> taggeds { get; protected set; } // node that will be removed
-        public Stack<(TN n, SG s)> contour { get; protected set; } // node that will be connected
+        public List<TN>           taggeds { get; protected set; } // node that will be removed
+        public List<(TN n, SG s)> contour { get; protected set; } // node that will be connected
+        double h = 1e-10d;
 
         public Convex(IEnumerable<f3> originals) {
             var xs = originals.OrderBy(p => p.x);
@@ -27,7 +26,7 @@ namespace kmty.geom.d3 {
             var p1 = xs.Last();
             var p2 = originals.OrderByDescending(p => lengthsq(cross(p - p0, p1 - p0))).First();
             var p3 = originals.OrderByDescending(f => new TN(p0, p1, p2).DistFactor(f)).First();
-            this.centroid = (p0 + p1 + p2 + p3) * 0.25f; // caz center of tir's grv = center of points
+            this.centroid = (p0 + p1 + p2 + p3) * 0.25f;
 
             var n0 = new TN(p0, p1, p2); n0.SetNormal(centroid);
             var n1 = new TN(p1, p2, p3); n1.SetNormal(centroid);
@@ -39,10 +38,10 @@ namespace kmty.geom.d3 {
             n2.neighbors = new List<TN>() { n3, n0, n1 };
             n3.neighbors = new List<TN>() { n0, n1, n2 };
 
-            this.nodes = new List<TN>() { n0, n1, n2, n3 };
+            this.nodes    = new List<TN>() { n0, n1, n2, n3 };
             this.outsides = originals;
-            this.taggeds = new Stack<TN>();
-            this.contour = new Stack<(TN n, SG s)>();
+            this.taggeds  = new List<TN>();
+            this.contour  = new List<(TN n, SG s)>();
         }
 
         public void ExpandLoop(int maxitr = int.MaxValue) {
@@ -51,130 +50,77 @@ namespace kmty.geom.d3 {
         }
 
         public bool Expand() {
+            taggeds.Clear();
+            contour.Clear();
             outsides = outsides.Where(p => !Contains(p));
             if (outsides.Count() == 0) return false;
-            var _f = false;
-            TN  _n = default;
-            f3  _p = default;
 
-            foreach (var n in nodes) {
-                var sort = outsides
-                    .Where(p => dot(p - n.center, n.normal) > 0)
-                    .OrderByDescending(p => n.DistFactor(p));
-                if (sort.Count() > 0) { _f = true; _p = sort.First(); _n = n; }
-            }
-
-            if (_f) {
-                taggeds.Push(_n);
+            if (FindApex(out d3 _p, out TN _n)) {
+                // tag fase
+                taggeds.Add(_n);
                 foreach (var nei in _n.neighbors) NeighborSearch(nei, _n, _p);
 
-
-                // debug
-                var c1 = new HashSet<d3>();
-                foreach (var c in contour) {
-                    c1.Add(c.s.a);
-                    c1.Add(c.s.b);
-                }
-                if(!(c1.Count == contour.Count)) {
-                    Debug.LogWarning(c1.Count);
-                    Debug.LogWarning(contour.Count);
-
-                    int i = 0;
-                    foreach (var c in contour) {
-                        Debug.LogWarning($"{i}, n:{c.n.center}, a: {c.s.a}, b: {c.s.b}");
-                        i++;
-                    }
-                }
-                var c2 = c1.ToDictionary(c => c, c => 0);
-                foreach (var c in contour) {
-                    c2[c.s.a]++;
-                    c2[c.s.b]++;
-                }
-                foreach (var v in c2.Values) {
-                    Assert.IsTrue(v == 2);
-                }
-
-
-                // remove fase
-                while (taggeds.Count > 0) {
-                    var n = taggeds.Pop();
+                // rmv fase
+                foreach(var n in taggeds) { 
                     foreach (var nei in n.neighbors) { nei.neighbors.Remove(n); }
                     nodes.Remove(n);
                     RollbackCentroid(n);
-                    n = null;
                 }
 
-                // create cone
-                var cone = new List<(TN n, d3 a, d3 b)>();
-                while (contour.Count > 0) {
-                    var c = contour.Pop();
+                // add fase
+                var cone = new (TN n, d3 a, d3 b)[contour.Count];
+                for (var i = 0; i < contour.Count; i++) {
+                    var c = contour[i];
+                    var s = c.s;
                     var pair = c.n;
-                    var sgmt = c.s;
-                    var curr = new TN(_p, sgmt.a, sgmt.b);
+                    var curr = new TN(_p, s.a, s.b);
                     curr.neighbors.Add(pair);
                     pair.neighbors.Add(curr);
 
-                    //foreach (var l in list) {
-                    for(var i = 0; i < cone.Count; i++) {
-                        var l = cone[i];
-                        Assert.IsTrue(curr.neighbors.Count <= 3);
-                        //Assert.IsTrue(l.n.neighbors.Count <= 3);
-                        if (sgmt.a.Equals(l.a) || sgmt.a.Equals(l.b) || sgmt.b.Equals(l.a) || sgmt.b.Equals(l.b)) {
-                            if (!l.n.neighbors.Contains(curr)) l.n.neighbors.Add(curr);
-                            else throw new System.Exception();
-                            if(!curr.neighbors.Contains(l.n)) curr.neighbors.Add(l.n);
-                            else throw new System.Exception();
+                    foreach (var l in cone) {
+                        if (s.a.Equals(l.a) || s.a.Equals(l.b) || s.b.Equals(l.a) || s.b.Equals(l.b)) {
+                            if (!l.n.neighbors.Contains(curr) && !curr.neighbors.Contains(l.n)) {
+                                l.n.neighbors.Add(curr);
+                                curr.neighbors.Add(l.n);
+                            } else throw new System.Exception();
                         }
                     }
-                    cone.Add((curr, sgmt.a, sgmt.b));
-                    foreach (var l in cone) l.n.SetNormal(this.centroid);
+                    cone[i] = (curr, s.a, s.b);
                     UpdateCentroid(curr);
                 }
 
                 nodes.AddRange(cone.Select(l => l.n));
-                foreach (var n in nodes) { n.SetNormal(this.centroid); }
+                foreach (var n in nodes) n.SetNormal(centroid);
+                return true;
             }
-
-            //check
-            foreach (var n in nodes) {
-                if (n.neighbors.Count != 3) {
-                    var p = new HashSet<d3>();
-                    n.neighbors.ForEach(_n => {
-                        p.Add(_n.a);
-                        p.Add(_n.b);
-                        p.Add(_n.c);
-                    });
-                    Assert.IsTrue(p.Count <= 6 && p.Count >= 4);
-                    Debug.Log(p.Count);
-                }
-                foreach (var nei in n.neighbors) { Assert.IsTrue(nei != null); }
-            }
-            return _f;
+            return false;
         }
 
+        bool FindApex(out d3 _p, out TN _n) {
+            foreach (var n in this.nodes) {
+                var s = outsides.Where(p => dot(p - n.center, n.normal) > 0).OrderByDescending(p => n.DistFactor(p));
+                if (s.Count() > 0) { _p = s.First(); _n = n; return true; }
+            }
+            _p = default;
+            _n = default;
+            return false;
+        }
 
-        // consider degenerated case or numerical problem
-        double h = 1e-10d;
-        void NeighborSearch(TN curr, TN pair, f3 p) {
-            if (dot(p - curr.a, curr.normal) > h &&
-                dot(p - curr.b, curr.normal) > h &&
-                dot(p - curr.c, curr.normal) > h) {
-                taggeds.Push(curr);
+        void NeighborSearch(TN curr, TN pair, d3 p) {
+            if (dot(p - curr.center, curr.normal) > h) {
+                taggeds.Add(curr);
                 foreach (var n in curr.neighbors) {
                     if (!taggeds.Contains(n)) NeighborSearch(n, curr, p);
                 }
             } else {
                 var t = (curr, curr.Common(pair));
-                if (!contour.Contains(t)) contour.Push(t);
+                if (!contour.Contains(t)) contour.Add(t);
             }
         }
 
-        public bool Contains(f3 p) {
+        public bool Contains(d3 p) {
             foreach (var n in nodes) {
-                //if (dot(p - n.a, n.normal) > 1e-7d) return false;
-                if (dot(p - n.a, n.normal) > 0 &&
-                    dot(p - n.b, n.normal) > 0 && 
-                    dot(p - n.c, n.normal) > 0) return false;
+                if (dot(p - n.center, n.normal) > h) return false;
             }
             return true;
         }
@@ -203,15 +149,13 @@ namespace kmty.geom.d3 {
 
     public class TriangleNode {
         public Triangle t { get; }
-        public d3 center => t.GetGravityCenter();
+        public d3 center { get; }
         public d3 normal { get; private set; }
-        public d3 a => t.a;
-        public d3 b => t.b;
-        public d3 c => t.c;
         public List<TN> neighbors { get; set; }
 
         public TriangleNode(d3 p1, d3 p2, d3 p3) {
             this.t = new Triangle(p1, p2, p3);
+            this.center = t.GetGravityCenter();
             this.neighbors = new List<TN>();
         }
 
@@ -221,12 +165,12 @@ namespace kmty.geom.d3 {
             this.normal = normalize(v) * s;
         }
 
-        public double DistFactor(d3 p) => lengthsq(cross(p - a, dot(p - b, p - c)));
+        public double DistFactor(d3 p) => lengthsq(cross(p - t.a, dot(p - t.b, p - t.c)));
 
         public SG Common(TN pair) {
-            if (this.t.HasVert(pair.a) && this.t.HasVert(pair.b)) return new SG(pair.a, pair.b); 
-            if (this.t.HasVert(pair.b) && this.t.HasVert(pair.c)) return new SG(pair.b, pair.c); 
-            if (this.t.HasVert(pair.c) && this.t.HasVert(pair.a)) return new SG(pair.c, pair.a);
+            if (this.t.HasVert(pair.t.a) && this.t.HasVert(pair.t.b)) return new SG(pair.t.a, pair.t.b); 
+            if (this.t.HasVert(pair.t.b) && this.t.HasVert(pair.t.c)) return new SG(pair.t.b, pair.t.c); 
+            if (this.t.HasVert(pair.t.c) && this.t.HasVert(pair.t.a)) return new SG(pair.t.c, pair.t.a);
             throw new System.Exception();
         }
     }
