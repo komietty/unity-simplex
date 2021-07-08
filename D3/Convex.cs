@@ -1,7 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using UnityEngine;
 using Unity.Mathematics;
 using static Unity.Mathematics.math;
 
@@ -55,10 +54,10 @@ namespace kmty.geom.d3 {
             outsides = outsides.Where(p => !Contains(p));
             if (outsides.Count() == 0) return false;
 
-            if (FindApex(out d3 _p, out TN _n)) {
+            if (FindApex(out d3 apex, out TN root)) {
                 // tag fase
-                taggeds.Add(_n);
-                foreach (var nei in _n.neighbors) NeighborSearch(nei, _n, _p);
+                taggeds.Add(root);
+                foreach (var nei in root.neighbors) NeighborSearch(nei, root, apex);
 
                 // rmv fase
                 foreach(var n in taggeds) { 
@@ -73,11 +72,12 @@ namespace kmty.geom.d3 {
                     var c = contour[i];
                     var s = c.s;
                     var pair = c.n;
-                    var curr = new TN(_p, s.a, s.b);
+                    var curr = new TN(apex, s.a, s.b);
                     curr.neighbors.Add(pair);
                     pair.neighbors.Add(curr);
 
                     foreach (var l in cone) {
+                        if (l.n == null) continue;
                         if (s.a.Equals(l.a) || s.a.Equals(l.b) || s.b.Equals(l.a) || s.b.Equals(l.b)) {
                             if (!l.n.neighbors.Contains(curr) && !curr.neighbors.Contains(l.n)) {
                                 l.n.neighbors.Add(curr);
@@ -85,6 +85,7 @@ namespace kmty.geom.d3 {
                             } else throw new System.Exception();
                         }
                     }
+                    UnityEngine.Assertions.Assert.IsTrue(curr != null);
                     cone[i] = (curr, s.a, s.b);
                     UpdateCentroid(curr);
                 }
@@ -96,13 +97,13 @@ namespace kmty.geom.d3 {
             return false;
         }
 
-        bool FindApex(out d3 _p, out TN _n) {
+        bool FindApex(out d3 apex, out TN root) {
             foreach (var n in this.nodes) {
                 var s = outsides.Where(p => dot(p - n.center, n.normal) > 0).OrderByDescending(p => n.DistFactor(p));
-                if (s.Count() > 0) { _p = s.First(); _n = n; return true; }
+                if (s.Count() > 0) { apex = s.First(); root = n; return true; }
             }
-            _p = default;
-            _n = default;
+            apex = default;
+            root = default;
             return false;
         }
 
