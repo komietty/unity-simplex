@@ -1,5 +1,4 @@
 ﻿using UnityEngine;
-using System;
 using Unity.Mathematics;
 using static Unity.Mathematics.math;
 using static kmty.geom.d3.Util3D;
@@ -27,7 +26,7 @@ namespace kmty.geom.d3 {
     using d3 = double3;
     using SG = Segment;
 
-    public struct Triangle : IEquatable<Triangle> {
+    public struct Triangle : System.IEquatable<Triangle> {
         public d3 a { get; }
         public d3 b { get; }
         public d3 c { get; }
@@ -36,7 +35,7 @@ namespace kmty.geom.d3 {
         public Triangle(SG s, d3 p) : this(s.a, s.b, p) { } 
         public Triangle(V3 p1, V3 p2, V3 p3) : this(CastV3D3(p1), CastV3D3(p2), CastV3D3(p3)) { } 
         public Triangle(d3 p1, d3 p2, d3 p3) {
-            if (Equals(p1, p2) || Equals(p2, p3) || Equals(p3, p1)) throw new Exception();
+            if (Equals(p1, p2) || Equals(p2, p3) || Equals(p3, p1)) throw new System.Exception();
             this.a = p1;
             this.b = p2;
             this.c = p3;
@@ -48,7 +47,7 @@ namespace kmty.geom.d3 {
             if (p.Equals(a)) return new SG(b, c);
             if (p.Equals(b)) return new SG(c, a);
             if (p.Equals(c)) return new SG(a, b);
-            throw new Exception();
+            throw new System.Exception();
         }
 
         public bool IsSameSide(d3 p1, d3 p2, bool includeOnPlane) {

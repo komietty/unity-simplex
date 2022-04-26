@@ -16,11 +16,39 @@ namespace kmty.geom.d3 {
             this.b = b;
         }
 
+        public bool Contains(double3 s){
+            return math.all(a == s) || math.all(b == s);
+        }
+        
+        public bool EqualsIgnoreDirection(Segment pair){
+            return this.Equals(pair) || this.Equals(new Segment(pair.b, pair.a));
+        }
+
         public void Draw() {
             GL.Begin(GL.LINES);
             GL.Vertex((float3)a);
             GL.Vertex((float3)b);
             GL.End();
         }
+
+/*
+        #region IEquatable
+        public override bool Equals(object obj) { return obj is Segment pair && Equals(pair); }
+        public static bool operator ==(Segment left, Segment right) { return left.Equals(right); }
+        public static bool operator !=(Segment left, Segment right) { return !(left == right); }
+
+        public bool Equals(Segment s) {
+            if(Equals(s.a, a) && Equals(s.b, b)) return true;
+            return false;
+        }
+
+        public override int GetHashCode() {
+            int hashCode = 1474027755;
+            hashCode = hashCode * -1521134295 + a.GetHashCode();
+            hashCode = hashCode * -1521134295 + b.GetHashCode();
+            return hashCode;
+        }
+        #endregion
+*/
     }
 }
