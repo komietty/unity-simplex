@@ -14,27 +14,32 @@ namespace kmty.geom.d3 {
 
     public struct Tetrahedra {
         public d34  vrts { get; }
-        public TR[] tris { get; }
         public d3 a => vrts[0]; 
         public d3 b => vrts[1];
         public d3 c => vrts[2];
         public d3 d => vrts[3];
 
+        public TR ta; 
+        public TR tb;
+        public TR tc;
+        public TR td;
+
         public Tetrahedra(V3 a, V3 b, V3 c, V3 d) : this(CastV3D3(a), CastV3D3(b), CastV3D3(c), CastV3D3(d)) { }
         public Tetrahedra(d3 a, d3 b, d3 c, d3 d) {
             this.vrts = new d34(a, b, c, d);
-            this.tris = new TR[] {
-                new TR(a, b, c),
-                new TR(b, c, d),
-                new TR(c, d, a),
-                new TR(d, a, b)
-            };
+            ta = new TR(a, b, c);
+            tb = new TR(b, c, d);
+            tc = new TR(c, d, a);
+            td = new TR(d, a, b);
 
             if (Equals(a, b) || Equals(a, c) || Equals(a, d) || 
                 Equals(b, c) || Equals(b, d) || Equals(c, d)) throw new Exception();
         }
 
-        public bool HasFace(TR t) => Array.Exists(tris, _t => _t == t);
+        public bool HasFace(TR t) {
+            if (t == ta || t == tb || t == tc || t == td) return true;
+            return false;
+        }
 
         public bool HasPoint(d3 p) {
             if (p.Equals(a)) return true;
@@ -45,18 +50,18 @@ namespace kmty.geom.d3 {
         }
 
         public bool Contains(d3 p, bool includeOnFacet) {
-            var f1 = tris[0].IsSameSide(d, p, includeOnFacet);
-            var f2 = tris[1].IsSameSide(a, p, includeOnFacet);
-            var f3 = tris[2].IsSameSide(b, p, includeOnFacet);
-            var f4 = tris[3].IsSameSide(c, p, includeOnFacet);
+            var f1 = ta.IsSameSide(d, p, includeOnFacet);
+            var f2 = tb.IsSameSide(a, p, includeOnFacet);
+            var f3 = tc.IsSameSide(b, p, includeOnFacet);
+            var f4 = td.IsSameSide(c, p, includeOnFacet);
             return f1 && f2 && f3 && f4;
         }
 
         public d3 RemainingPoint(TR t) {
-            if (t == tris[0]) return d;
-            if (t == tris[1]) return a;
-            if (t == tris[2]) return b;
-            if (t == tris[3]) return c;
+            if (t == ta) return d;
+            if (t == tb) return a;
+            if (t == tc) return b;
+            if (t == td) return c;
             throw new Exception();
         }
 

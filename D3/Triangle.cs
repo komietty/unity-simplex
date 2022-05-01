@@ -7,7 +7,7 @@ using static kmty.geom.d3.Util3D;
 TODO:
 1.
 circumscribed center has to be deterniministically called because
-two vertical line has to cross each other because they are on same triangle
+two vertical line has to cross each other so that they are on same triangle
 2.
 hopefully create sorted list in certain order.
 ex.
