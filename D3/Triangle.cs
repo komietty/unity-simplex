@@ -147,12 +147,12 @@ namespace kmty.geom.d3 {
         public static bool operator !=(Triangle left, Triangle right) { return !(left == right); }
 
         public bool Equals(Triangle t) {
-            if(Equals(t.a, a) && Equals(t.b, b) && Equals(t.c, c)) return true;
-            if(Equals(t.b, a) && Equals(t.c, b) && Equals(t.a, c)) return true;
-            if(Equals(t.c, a) && Equals(t.a, b) && Equals(t.b, c)) return true;
-            if(Equals(t.a, a) && Equals(t.c, b) && Equals(t.b, c)) return true;
-            if(Equals(t.b, a) && Equals(t.a, b) && Equals(t.c, c)) return true;
-            if(Equals(t.c, a) && Equals(t.b, b) && Equals(t.a, c)) return true;
+            if     (Equals(t.a, a) && Equals(t.b, b) && Equals(t.c, c)) return true;
+            else if(Equals(t.b, a) && Equals(t.c, b) && Equals(t.a, c)) return true;
+            else if(Equals(t.c, a) && Equals(t.a, b) && Equals(t.b, c)) return true;
+            else if(Equals(t.a, a) && Equals(t.c, b) && Equals(t.b, c)) return true;
+            else if(Equals(t.b, a) && Equals(t.a, b) && Equals(t.c, c)) return true;
+            else if(Equals(t.c, a) && Equals(t.b, b) && Equals(t.a, c)) return true;
             return false;
         }
 
