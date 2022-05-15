@@ -7,51 +7,57 @@ namespace kmty.geom.d2 {
     using f3 = float3;
     using SG = Segment;
 
+    /// <summary>
+    /// Borders of oriented 2-simplex in R^2 (counterclockwise oriented).
+    /// mtx: 三角形空間のe1, e2についての表現行列
+    /// inv: e1, e2空間の三角形の2辺についての表現行列
+    /// </summary>
     public struct Triangle : IEquatable<Triangle> {
         public f2 a { get; }
         public f2 b { get; }
         public f2 c { get; }
-        public SG[] sgms { get; }
+        SG sa;
+        SG sb;
+        SG sc;
+        float2x2 mtx;
+        float2x2 inv;
 
         public Triangle(SG e, f2 c) : this(e.a, e.b, c) { }
-        public Triangle(f2 a, f2 b, f2 c) { // counterclockwise
+        public Triangle(f2 a, f2 b, f2 c) {
             if (Equals(a, b) || Equals(b, c) || Equals(c, a)) throw new Exception();
             bool f = cross(float3(b - a, 0), float3(c - b, 0)).z > 0;
             this.a = a;
             this.b = f ? b : c;
             this.c = f ? c : b;
-            this.sgms = new SG[] {
-                new SG(this.a, this.b),
-                new SG(this.b, this.c),
-                new SG(this.c, this.a)
-            };
+            this.sa = new SG(this.b, this.c);
+            this.sb = new SG(this.c, this.a);
+            this.sc = new SG(this.a, this.b);
+            this.mtx = new float2x2(b - a, c - a);
+            this.inv = math.inverse(mtx);
         }
 
-        public bool Contains(SG e) => Array.Exists(sgms, s => s == e);
+        public bool Contains(SG e) => (sa == e || sb == e || sc == e);
+
+        public f2 EuclidCord2TriangleCord(f2 p) => math.mul(inv, p - this.a); 
+        public f2 TriangleCord2EuclidCord(f2 p) => math.mul(mtx, p) + this.a; 
 
         public f2 RemainingPoint(SG e) {
-            if (e.Equals(sgms[0])) return c;
-            if (e.Equals(sgms[1])) return a;
-            if (e.Equals(sgms[2])) return b;
+            if (e.Equals(sa)) return a;
+            if (e.Equals(sb)) return b;
+            if (e.Equals(sc)) return c;
             throw new Exception();
         }
 
         public bool Includes(f2 p, bool close) {
-            CrossForEachEdge(p, out float c1, out float c2, out float c3);
-            bool f1 = (c1 > 0 && c2 > 0 && c3 > 0) || (c1 < 0 && c2 < 0 && c3 < 0);
-            bool f2 = c1 * c2 * c3 == 0;
-            return close ? f1 || f2 : f1;
+            var v = EuclidCord2TriangleCord(p);
+            var f1 = v.x == 0 || v.y == 0 || v.x + v.y == 1;
+            var f2 = v.x > 0  && v.y > 0  && v.x + v.y < 1;
+            return close ? f1 || f2 : f2;
         }
 
         public bool OnEdge(f2 p) {
-            CrossForEachEdge(p, out float c1, out float c2, out float c3);
-            return c1 * c2 * c3 == 0;
-        }
-
-        void CrossForEachEdge(f2 p, out float ca, out float cb, out float cc) {
-            ca = cross(new f3(b - a, 0), new f3(p - b, 0)).z;
-            cb = cross(new f3(c - b, 0), new f3(p - c, 0)).z;
-            cc = cross(new f3(a - c, 0), new f3(p - a, 0)).z;
+            var v = EuclidCord2TriangleCord(p);
+            return v.x == 0 || v.y == 0 || v.x + v.y == 1;
         }
 
         public Circle GetCircumscribledCircle() { 
@@ -84,6 +90,26 @@ namespace kmty.geom.d2 {
             h = h * -1521134295 + b.GetHashCode();
             h = h * -1521134295 + c.GetHashCode();
             return h;
+        }
+        #endregion
+
+        #region Alternate Primitive Algolithm
+        public bool Includes4Test(f2 p, bool close) {
+            CrossForEachEdge4Test(p, out float c1, out float c2, out float c3);
+            bool f1 = (c1 > 0 && c2 > 0 && c3 > 0) || (c1 < 0 && c2 < 0 && c3 < 0);
+            bool f2 = c1 * c2 * c3 == 0;
+            return close ? f1 || f2 : f1;
+        }
+
+        public bool OnEdge4Test(f2 p) {
+            CrossForEachEdge4Test(p, out float c1, out float c2, out float c3);
+            return c1 * c2 * c3 == 0;
+        }
+
+        void CrossForEachEdge4Test(f2 p, out float ca, out float cb, out float cc) {
+            ca = cross(new f3(b - a, 0), new f3(p - b, 0)).z;
+            cb = cross(new f3(c - b, 0), new f3(p - c, 0)).z;
+            cc = cross(new f3(a - c, 0), new f3(p - a, 0)).z;
         }
         #endregion
     }
