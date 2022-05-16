@@ -14,13 +14,5 @@ namespace kmty.geom.d3 {
             pos = p;
             vec = normalize(v);
         }
-
-        public void Draw() {
-            GL.Begin(GL.LINE_STRIP);
-            GL.Vertex((float3)(pos - vec * 10000));
-            GL.Vertex((float3)pos);
-            GL.Vertex((float3)(pos + vec * 10000));
-            GL.End();
-        }
     }
 }

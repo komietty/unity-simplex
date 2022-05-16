@@ -11,10 +11,7 @@ namespace kmty.geom.d2 {
         public Line(float2 p, float2 v) {
             this.vec = normalize(v);
             this.pos = p;
-            //var tilt = v.y / v.x;
-            //this.pos = p - this.vec * p.x;
         }
-
 
         public bool Equals(Line other) {
             // fixed later

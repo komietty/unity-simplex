@@ -170,30 +170,6 @@ namespace kmty.geom.d3 {
             return (num: 0, p1: default, p2: default);
         }
 
-        #region drawer
-        public void Draw() {
-            GL.Begin(GL.LINE_STRIP);
-            GL.Vertex((f3)a);
-            GL.Vertex((f3)b);
-            GL.Vertex((f3)c);
-            GL.Vertex((f3)a);
-            GL.End();
-        }
-
-        public void DrawCircumCircle() {
-            var nrm = normalize(cross(b - a, c - a));
-            var crc = (f3)GetCircumCenter();
-            var qut = Quaternion.FromToRotation(V3.forward, (f3)nrm);
-            GL.Begin(GL.LINE_STRIP);
-            for (float j = 0; j < Mathf.PI * 2.1f; j += Mathf.PI * 0.03f) {
-                var pnt = double3(cos(j), sin(j), 0) * distance(crc, a);
-                var pos = qut * (f3)pnt + (V3)crc;
-                GL.Vertex(pos);
-            }
-            GL.End();
-        }
-        #endregion
-
         #region IEquatable
         public override bool Equals(object obj) { return obj is Triangle triangle && Equals(triangle); }
         public static bool operator ==(Triangle left, Triangle right) { return left.Equals(right); }

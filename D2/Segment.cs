@@ -3,13 +3,13 @@ using Unity.Mathematics;
 using static Unity.Mathematics.math;
 
 namespace kmty.geom.d2 {
-    using V2 = Vector2;
     using f2 = float2;
     using f3 = float3;
     using SG = Segment;
 
-    public struct DirectedSegment { }
-
+    /// <summary>
+    /// non oriented 1-simplex.
+    /// </summary>
     public struct Segment : System.IEquatable<SG> {
         public f2 a { get; }
         public f2 b { get; }
@@ -47,17 +47,15 @@ namespace kmty.geom.d2 {
             return float2(a1 * c1 - b1 * c2, a1 * c2 - -b1 * c1) / dt;
         }
 
-        //public float GetDistance(f2 p) => distance(GetClosestPoint(p), p);
-        public float GetDistance(f2 p) => abs(cross(new f3(p - a, 0), new f3(normalize(b - a), 0)).z);
-
         public bool Contains(f2 p) {
             var d0 = b - GetClosestPoint(p);
             var d1 = b - a;
             return (dot(d0, d1) >= 0f) && (lengthsq(d0) <= lengthsq(d1));
         }
 
-        public V2 GetPoint(float offset) => a + normalize(b - a) * offset;
-        public void DrawGizmos() { Gizmos.DrawLine((V2)a, (V2)b); }
+        public float GetDistance(f2 p) => abs(cross(new f3(p - a, 0), new f3(normalize(b - a), 0)).z);
+
+        public Vector2 GetPoint(float offset) => a + normalize(b - a) * offset;
 
         #region IEqatable
         public override bool Equals(object obj) { return obj is SG segment && Equals(segment); }

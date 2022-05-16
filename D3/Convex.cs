@@ -1,4 +1,3 @@
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using Unity.Mathematics;
@@ -142,7 +141,12 @@ namespace kmty.geom.d3 {
         public void Draw() {
             for (int i = 0; i < nodes.Count; i++) {
                 var n = nodes[i];
-                n.t.Draw();
+                UnityEngine.GL.Begin(UnityEngine.GL.LINE_STRIP);
+                UnityEngine.GL.Vertex((f3)n.t.a);
+                UnityEngine.GL.Vertex((f3)n.t.b);
+                UnityEngine.GL.Vertex((f3)n.t.c);
+                UnityEngine.GL.Vertex((f3)n.t.a);
+                UnityEngine.GL.End();
             }
         }
     }

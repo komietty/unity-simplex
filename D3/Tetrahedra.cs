@@ -96,16 +96,5 @@ namespace kmty.geom.d3 {
             var ctr = new d3(detX, detY, detZ) / (2 * detA);
             return new Sphere(ctr, distance(ctr, a));
         }
-
-        public void Draw() {
-            GL.Begin(GL.LINES);
-            GL.Vertex((f3)a); GL.Vertex((f3)b);
-            GL.Vertex((f3)b); GL.Vertex((f3)c);
-            GL.Vertex((f3)c); GL.Vertex((f3)a);
-            GL.Vertex((f3)a); GL.Vertex((f3)d);
-            GL.Vertex((f3)b); GL.Vertex((f3)d);
-            GL.Vertex((f3)c); GL.Vertex((f3)d);
-            GL.End();
-        }
     }
 }

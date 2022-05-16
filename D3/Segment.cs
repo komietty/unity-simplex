@@ -24,13 +24,6 @@ namespace kmty.geom.d3 {
             return this.Equals(pair) || this.Equals(new Segment(pair.b, pair.a));
         }
 
-        public void Draw() {
-            GL.Begin(GL.LINES);
-            GL.Vertex((float3)a);
-            GL.Vertex((float3)b);
-            GL.End();
-        }
-
 /*
         #region IEquatable
         public override bool Equals(object obj) { return obj is Segment pair && Equals(pair); }
