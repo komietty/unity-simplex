@@ -85,7 +85,6 @@ namespace kmty.geom.d2.test {
                 var p1 = UR.insideUnitCircle;
                 var f1 = t1.Includes(p1, true);
                 var f2 = t1.Includes4Test(p1, true);
-                Debug.Log(f2);
                 Assert.IsTrue(!(f1 ^ f2));
             }
         }

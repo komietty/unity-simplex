@@ -2,7 +2,7 @@
 using UnityEngine;
 using Unity.Mathematics;
 using static Unity.Mathematics.math;
-using static kmty.geom.d3.Util3D;
+using static kmty.geom.d3.Utils;
 
 namespace kmty.geom.d3 {
     using TR  = Triangle;
@@ -19,18 +19,18 @@ namespace kmty.geom.d3 {
         public d3 c => vrts[2];
         public d3 d => vrts[3];
 
-        public TR ta; 
-        public TR tb;
-        public TR tc;
-        public TR td;
+        public TR ta { get; }
+        public TR tb { get; }
+        public TR tc { get; }
+        public TR td { get; }
 
-        public Tetrahedra(V3 a, V3 b, V3 c, V3 d) : this(CastV3D3(a), CastV3D3(b), CastV3D3(c), CastV3D3(d)) { }
+        public Tetrahedra(V3 a, V3 b, V3 c, V3 d) : this(V3D3(a), V3D3(b), V3D3(c), V3D3(d)) { }
         public Tetrahedra(d3 a, d3 b, d3 c, d3 d) {
             this.vrts = new d34(a, b, c, d);
-            ta = new TR(a, b, c);
-            tb = new TR(b, c, d);
-            tc = new TR(c, d, a);
-            td = new TR(d, a, b);
+            this.ta = new TR(a, b, c);
+            this.tb = new TR(b, c, d);
+            this.tc = new TR(c, d, a);
+            this.td = new TR(d, a, b);
 
             if (Equals(a, b) || Equals(a, c) || Equals(a, d) || 
                 Equals(b, c) || Equals(b, d) || Equals(c, d)) throw new Exception();
@@ -65,10 +65,10 @@ namespace kmty.geom.d3 {
             throw new Exception();
         }
 
+        /// <summary>
+        /// http://mathworld.wolfram.com/Circumsphere.html
+        /// </summary>
         public Sphere GetCircumscribedSphere() {
-            /// <summary>
-            // http://mathworld.wolfram.com/Circumsphere.html
-            /// </summary>
             var a2 = a * a; var a2ex = a2.x + a2.y + a2.z; 
             var b2 = b * b; var b2ex = b2.x + b2.y + b2.z;
             var c2 = c * c; var c2ex = c2.x + c2.y + c2.z;
@@ -97,7 +97,6 @@ namespace kmty.geom.d3 {
             return new Sphere(ctr, distance(ctr, a));
         }
 
-        public void Log() { Debug.Log($"a:{a}, b:{b}, c:{c}, d:{d}"); }
         public void Draw() {
             GL.Begin(GL.LINES);
             GL.Vertex((f3)a); GL.Vertex((f3)b);

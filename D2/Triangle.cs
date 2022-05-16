@@ -2,16 +2,18 @@
 using Unity.Mathematics;
 using static Unity.Mathematics.math;
 
+/*
+SUMMARY: 
+Borders of oriented 2-simplex in R^2 (counterclockwise oriented).
+mtx: 三角形空間のe1, e2についての表現行列
+inv: e1, e2空間の三角形の2辺についての表現行列
+*/
+
 namespace kmty.geom.d2 {
     using f2 = float2;
     using f3 = float3;
     using SG = Segment;
 
-    /// <summary>
-    /// Borders of oriented 2-simplex in R^2 (counterclockwise oriented).
-    /// mtx: 三角形空間のe1, e2についての表現行列
-    /// inv: e1, e2空間の三角形の2辺についての表現行列
-    /// </summary>
     public struct Triangle : IEquatable<Triangle> {
         public f2 a { get; }
         public f2 b { get; }

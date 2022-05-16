@@ -51,5 +51,22 @@ namespace kmty.geom.d3.test {
                 Assert.IsTrue(convex.Contains(p));
             }
         }
+
+        [Test]
+        public void TriangleSegmentIntersectionTest() {
+            for (var i = 0; i < 1000; i++) {
+                var t = new Triangle(UR.insideUnitSphere, UR.insideUnitSphere, UR.insideUnitSphere);
+                var s = new Segment(UR.insideUnitSphere, UR.insideUnitSphere);
+                var f1 = t.Intersects(s, out double3 p1, out bool e1);
+                var f2 = t.IntersectsUsingMtx(s, out double3 p2, out bool e2);
+                Assert.IsTrue(f1 == f2);
+                Assert.IsTrue(e1 == e2);
+                //Assert.IsTrue(math.all(p1 == p2));
+            }
+        }
+
+        [Test]
+        public void TriangleTriangleIntersectionTest() {
+        }
     }
 }
