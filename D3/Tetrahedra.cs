@@ -2,7 +2,7 @@
 using UnityEngine;
 using Unity.Mathematics;
 using static Unity.Mathematics.math;
-using static kmty.geom.d3.Util3D;
+using static kmty.geom.d3.Utils;
 
 namespace kmty.geom.d3 {
     using TR  = Triangle;
@@ -14,27 +14,32 @@ namespace kmty.geom.d3 {
 
     public struct Tetrahedra {
         public d34  vrts { get; }
-        public TR[] tris { get; }
         public d3 a => vrts[0]; 
         public d3 b => vrts[1];
         public d3 c => vrts[2];
         public d3 d => vrts[3];
 
-        public Tetrahedra(V3 a, V3 b, V3 c, V3 d) : this(CastV3D3(a), CastV3D3(b), CastV3D3(c), CastV3D3(d)) { }
+        public TR ta { get; }
+        public TR tb { get; }
+        public TR tc { get; }
+        public TR td { get; }
+
+        public Tetrahedra(V3 a, V3 b, V3 c, V3 d) : this(V3D3(a), V3D3(b), V3D3(c), V3D3(d)) { }
         public Tetrahedra(d3 a, d3 b, d3 c, d3 d) {
             this.vrts = new d34(a, b, c, d);
-            this.tris = new TR[] {
-                new TR(a, b, c),
-                new TR(b, c, d),
-                new TR(c, d, a),
-                new TR(d, a, b)
-            };
+            this.ta = new TR(a, b, c);
+            this.tb = new TR(b, c, d);
+            this.tc = new TR(c, d, a);
+            this.td = new TR(d, a, b);
 
             if (Equals(a, b) || Equals(a, c) || Equals(a, d) || 
                 Equals(b, c) || Equals(b, d) || Equals(c, d)) throw new Exception();
         }
 
-        public bool HasFace(TR t) => Array.Exists(tris, _t => _t == t);
+        public bool HasFace(TR t) {
+            if (t == ta || t == tb || t == tc || t == td) return true;
+            return false;
+        }
 
         public bool HasPoint(d3 p) {
             if (p.Equals(a)) return true;
@@ -45,25 +50,25 @@ namespace kmty.geom.d3 {
         }
 
         public bool Contains(d3 p, bool includeOnFacet) {
-            var f1 = tris[0].IsSameSide(d, p, includeOnFacet);
-            var f2 = tris[1].IsSameSide(a, p, includeOnFacet);
-            var f3 = tris[2].IsSameSide(b, p, includeOnFacet);
-            var f4 = tris[3].IsSameSide(c, p, includeOnFacet);
+            var f1 = ta.IsSameSide(d, p, includeOnFacet);
+            var f2 = tb.IsSameSide(a, p, includeOnFacet);
+            var f3 = tc.IsSameSide(b, p, includeOnFacet);
+            var f4 = td.IsSameSide(c, p, includeOnFacet);
             return f1 && f2 && f3 && f4;
         }
 
         public d3 RemainingPoint(TR t) {
-            if (t == tris[0]) return d;
-            if (t == tris[1]) return a;
-            if (t == tris[2]) return b;
-            if (t == tris[3]) return c;
+            if (t == ta) return d;
+            if (t == tb) return a;
+            if (t == tc) return b;
+            if (t == td) return c;
             throw new Exception();
         }
 
+        /// <summary>
+        /// http://mathworld.wolfram.com/Circumsphere.html
+        /// </summary>
         public Sphere GetCircumscribedSphere() {
-            /// <summary>
-            // http://mathworld.wolfram.com/Circumsphere.html
-            /// </summary>
             var a2 = a * a; var a2ex = a2.x + a2.y + a2.z; 
             var b2 = b * b; var b2ex = b2.x + b2.y + b2.z;
             var c2 = c * c; var c2ex = c2.x + c2.y + c2.z;
@@ -92,7 +97,6 @@ namespace kmty.geom.d3 {
             return new Sphere(ctr, distance(ctr, a));
         }
 
-        public void Log() { Debug.Log($"a:{a}, b:{b}, c:{c}, d:{d}"); }
         public void Draw() {
             GL.Begin(GL.LINES);
             GL.Vertex((f3)a); GL.Vertex((f3)b);

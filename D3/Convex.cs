@@ -12,7 +12,6 @@ namespace kmty.geom.d3 {
 
     public class Convex { 
         private IEnumerable<f3> outsides;
-        public AABB aabb       { get; protected set; }
         public List<TN> nodes  { get; protected set; }
         public d3 centroid     { get; protected set; }
         public List<TN>           taggeds { get; protected set; } // node that will be removed

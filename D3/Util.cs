@@ -8,9 +8,9 @@ namespace kmty.geom.d3 {
     using f3 = float3;
     using d3 = double3;
     using SG = Segment;
-    public static class Util3D {
+    public static class Utils {
 
-        public static d3 CastV3D3(V3 a) => (d3)(f3)a;
+        public static d3 V3D3(V3 a) => (d3)(f3)a;
 
         public static d3 GetIntersectionPoint(Line a, Line b, double threshold) {
             var alpha = dot(a.vec, b.vec);

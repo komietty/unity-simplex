@@ -71,5 +71,22 @@ namespace kmty.geom.d2.test {
             Assert.IsTrue(t1.RemainingPoint(s2).Equals(t1.a));
             Assert.IsTrue(t1.RemainingPoint(s1).Equals(t1.b));
         }
+
+        [Test]
+        public void TriangleTransCoordTest() {
+            var t = new TR(new f2(1, 1), new f2(5, 2), new f2(2, 4));
+            var v1 = t.EuclidCord2TriangleCord(new f2(2, 2));
+            Assert.IsTrue(math.all(v1 == new f2(2, 3) / 11));
+            var v2 = t.TriangleCord2EuclidCord(v1);
+            Assert.IsTrue(math.all(v2 == new f2(2, 2)));
+
+            for (var i = 0; i < 100; i++) {
+                var t1 = new TR(UR.insideUnitCircle, UR.insideUnitCircle, UR.insideUnitCircle);
+                var p1 = UR.insideUnitCircle;
+                var f1 = t1.Includes(p1, true);
+                var f2 = t1.Includes4Test(p1, true);
+                Assert.IsTrue(!(f1 ^ f2));
+            }
+        }
     }
 }
