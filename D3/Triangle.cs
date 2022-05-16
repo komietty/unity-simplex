@@ -3,30 +3,22 @@ using Unity.Mathematics;
 using static Unity.Mathematics.math;
 using static kmty.geom.d3.Utils;
 
-/*
-TODO:
-1: circumscribed center has to be deterniministically called because
-two vertical line has to cross each other so that they are on same triangle
-2: Test Distance method, ref: https://cvtech.cc/pointdist/
-SUMMARY: 
-Borders of non oriented 2-simplex in R^3.
-mtx: 三角形空間のe1, e2についての表現行列
-inv: e1, e2空間の三角形の2辺についての表現行列
-*/
-
 namespace kmty.geom.d3 {
     using V3 = Vector3;
     using f3 = float3;
     using d3 = double3;
     using SG = Segment;
 
+    /// <summary>
+    /// Borders of non oriented 2-simplex in R^3.
+    /// </summary>
     public struct Triangle : System.IEquatable<Triangle> {
         public d3 a { get; }
         public d3 b { get; }
         public d3 c { get; }
         public d3 n { get; }
-        double3x3 mtx;
-        double3x3 inv;
+        double3x3 mtx; //三角形空間のe1, e2についての表現行列
+        double3x3 inv; //e1, e2空間の三角形の2辺についての表現行列
 
         public Triangle(SG s, d3 p) : this(s.a, s.b, p) { } 
         public Triangle(V3 p1, V3 p2, V3 p3) : this(V3D3(p1), V3D3(p2), V3D3(p3)) { } 
@@ -57,18 +49,7 @@ namespace kmty.geom.d3 {
             return includeOnPlane ? d >= 0 : d > 0;
         }
 
-        public bool Intersects(Line l, out d3 p, out bool isOnEdge) {
-            if (!CramersLow(l.pos, l.vec, out d3 d, out p)) {
-                isOnEdge = default;
-                return false;
-            }
-            isOnEdge = d.x == 0 || d.x == 1 || d.y == 0 || d.y == 1 || d.x + d.y == 1;
-            return d.x >= 0 && d.x <= 1 && d.y >= 0 && d.y <= 1 && d.x + d.y <= 1;
-        }
-
-
-        bool CramersLow(d3 ogn, d3 ray, out d3 det, out d3 pos) {
-            // using cramer's rule
+        bool CramersRule(d3 ogn, d3 ray, out d3 det, out d3 pos) {
             var e1 = b - a;
             var e2 = c - a;
             var denominator = determinant(double3x3(e1, e2, -ray));
@@ -87,8 +68,17 @@ namespace kmty.geom.d3 {
             return true;
         }
 
+        public bool Intersects(Line l, out d3 p, out bool isOnEdge) {
+            if (!CramersRule(l.pos, l.vec, out d3 d, out p)) {
+                isOnEdge = default;
+                return false;
+            }
+            isOnEdge = d.x == 0 || d.x == 1 || d.y == 0 || d.y == 1 || d.x + d.y == 1;
+            return d.x >= 0 && d.x <= 1 && d.y >= 0 && d.y <= 1 && d.x + d.y <= 1;
+        }
+
         public bool Intersects(SG e, out d3 p, out bool isOnEdge) {
-            if (!CramersLow(e.a, normalize(e.b - e.a), out d3 d, out p)) {
+            if (!CramersRule(e.a, normalize(e.b - e.a), out d3 d, out p)) {
                 isOnEdge = default;
                 return false;
             }
@@ -98,15 +88,9 @@ namespace kmty.geom.d3 {
             return f1 && f2;
         }
 
-        public d3 Distance(d3 p) {
-            var v = length(cross(p - a, dot(p - b, p - c))) / 6d;
-            var s = length(cross(b - a, c - a)) / 2d;
-            return 3 * v / s;
-        }
-
         /// <summary>
-        /// Close Enoughly identical to Intersection algolithm of Cramer's low one,
-        /// but some how causes an error in BistellarFllip of 3d.
+        /// Close Enoughly identical to Intersection algolithm of Cramer's Rule one,
+        /// but some how causes an error (in BistellarFllip of 3d).
         /// </summary>
         public bool IntersectsUsingMtx(SG e, out d3 point, out bool onedge) {
             var va = EuclidCord2TriangleCord(e.a);
@@ -127,9 +111,21 @@ namespace kmty.geom.d3 {
             return false;
         }
 
+        /// <summary>
+        /// ref: https://cvtech.cc/pointdist/
+        /// </summary>
+        public d3 Distance(d3 p) {
+            var v = length(cross(p - a, dot(p - b, p - c))) / 6d;
+            var s = length(cross(b - a, c - a)) / 2d;
+            return 3 * v / s;
+        }
 
         public d3 GetGravityCenter() =>  (a + b + c) / 3d;
 
+        /// <summary>
+        /// TODO: circumscribed center has to be deterniministically called. (two
+        /// vertical line has to cross each other so that they are on same triangle)
+        /// </summary>
         public d3 GetCircumCenter() {
             var pab = lerp(a, b, 0.5);
             var pbc = lerp(b, c, 0.5);
